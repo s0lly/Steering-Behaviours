@@ -12,4 +12,9 @@ The codebase can be found here: https://github.com/s0lly/Swarm-AI
 
 Please let me know how I could improve this!
 
+
+Acknowledgements:
+
 This was made using the Chili Framework: http://wiki.planetchili.net/index.php... - thanks Chili!
+
+The ideas of using simple states to create emergent behaviour came about while reading Mat Buckland's book Programming Game AI by Example. This code uses ideas similar to the Seek and Evade AI states.
