@@ -1,3 +1,11 @@
+
+/******************************************************************************************
+*	Game code and amendments by s0lly													   *
+*	https://www.youtube.com/channel/UCOyCXEB8NTx3Xjm8UptwsIg							   *
+*	https://s0lly.itch.io/																   *
+*	https://www.instagram.com/s0lly.gaming/												   *
+******************************************************************************************/
+
 #include "Creature.h"
 
 void Creature::UpdateState(std::vector<Creature>& creatures, float TOO_CLOSE, float MAX_GOOD_DISTANCE, float GETTING_TOO_FAR, Beacon& beacon)
