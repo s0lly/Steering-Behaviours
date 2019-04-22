@@ -17,11 +17,14 @@ void Creature::UpdateState(std::vector<Creature>& creatures, float TOO_CLOSE, fl
 	std::sort(relativeLocInfos.begin(), relativeLocInfos.end());
 
 	int targetObject = -1;
+	int numAligners = 0;
+	int maxAligners = 5;
+	float alignedDirection = 0.0f;
 
 
 	for (int j = 0; j < relativeLocInfos.size(); j++)
 	{
-		if ((ID != relativeLocInfos[j].objectID) && (relativeLocInfos[j].loc.y >= 0))
+		if ((ID != relativeLocInfos[j].objectID)) //  && (relativeLocInfos[j].loc.y >= 0)
 		{
 			if (relativeLocInfos[j].distSqrd < (TOO_CLOSE * TOO_CLOSE))
 			{
@@ -32,14 +35,20 @@ void Creature::UpdateState(std::vector<Creature>& creatures, float TOO_CLOSE, fl
 			}
 			else if (relativeLocInfos[j].distSqrd < (MAX_GOOD_DISTANCE * MAX_GOOD_DISTANCE))
 			{
-				state.type = STATE_TYPE::STATE_RANDOMWALK;
-				break;
+				state.type = STATE_TYPE::STATE_ALIGN;
+				alignedDirection += relativeLocInfos[j].direction;
+				numAligners++;
+				targetObject = 0;
+				if (numAligners == maxAligners)
+				{
+					break;
+				}
 			}
-			else if (relativeLocInfos[j].distSqrd < (GETTING_TOO_FAR * GETTING_TOO_FAR))
+			else if (relativeLocInfos[j].distSqrd < (GETTING_TOO_FAR * GETTING_TOO_FAR) && numAligners == 0)
 			{
 				state.type = STATE_TYPE::STATE_SEEK;
 				targetObject = j;
-
+				break;
 			}
 			//else
 			//{
@@ -67,7 +76,7 @@ void Creature::UpdateState(std::vector<Creature>& creatures, float TOO_CLOSE, fl
 			(beacon.loc.x - loc.x) * sinDir - (beacon.loc.y - loc.y) * cosDir);
 
 		targetObject = (int)relativeLocInfos.size();
-		relativeLocInfos.push_back(RelativeLocationInfo(newVec, 0.0f, targetObject));
+		relativeLocInfos.push_back(RelativeLocationInfo(newVec, 0.0f, targetObject, 0.0f));
 
 		state.type = STATE_TYPE::STATE_SEEK;
 			
@@ -76,7 +85,7 @@ void Creature::UpdateState(std::vector<Creature>& creatures, float TOO_CLOSE, fl
 
 	// Update direction, position, etc
 
-	float turnAmount = 0.0314f * 24.0f;
+	float turnAmount = PI / 8.0f;
 
 	switch (state.type)
 	{
@@ -95,8 +104,8 @@ void Creature::UpdateState(std::vector<Creature>& creatures, float TOO_CLOSE, fl
 
 			direction += turnAmount * newDir;
 
-			newDir = rand() % 7 - 3;
-			direction += turnAmount * (float)newDir / 5.0f;
+			//newDir = rand() % 7 - 3;
+			//direction += turnAmount * (float)newDir / 5.0f;
 		}break;
 
 		case STATE_TYPE::STATE_SEEK:
@@ -114,8 +123,8 @@ void Creature::UpdateState(std::vector<Creature>& creatures, float TOO_CLOSE, fl
 
 			direction += turnAmount * newDir;
 
-			newDir = rand() % 7 - 3;
-			direction += turnAmount * (float)newDir / 5.0f;
+			//
+			//
 
 		}break;
 
@@ -125,7 +134,15 @@ void Creature::UpdateState(std::vector<Creature>& creatures, float TOO_CLOSE, fl
 			newDir = newDir == 0 ? -1 : newDir;
 			direction += turnAmount * newDir;
 		}break;
+
+		case STATE_TYPE::STATE_ALIGN:
+		{
+			direction = alignedDirection / numAligners;
+		}break;
 	}
+
+	float newDir = rand() % 7 - 3;
+	direction += turnAmount * (float)newDir / 5.0f;
 
 	direction = ClampAngle(direction);
 }
@@ -133,7 +150,7 @@ void Creature::UpdateState(std::vector<Creature>& creatures, float TOO_CLOSE, fl
 
 void Creature::Move()
 {
-	float moveAmount = 100.0f;
+	float moveAmount = 20.0f;
 
 	loc.x += moveAmount * sin(direction);
 	loc.y -= moveAmount * cos(direction);

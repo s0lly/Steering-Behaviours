@@ -12,11 +12,12 @@
 
 struct RelativeLocationInfo
 {
-	RelativeLocationInfo(Vec2 in_loc, float in_distSqrd, int in_ID)
+	RelativeLocationInfo(Vec2 in_loc, float in_distSqrd, int in_ID, float in_direction)
 		:
 		loc(in_loc),
 		distSqrd(in_distSqrd),
-		objectID(in_ID)
+		objectID(in_ID),
+		direction(in_direction)
 	{
 	}
 
@@ -28,4 +29,5 @@ struct RelativeLocationInfo
 	Vec2 loc;
 	float distSqrd;
 	int objectID;
+	float direction;
 };

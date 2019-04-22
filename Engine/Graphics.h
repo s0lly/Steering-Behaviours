@@ -18,14 +18,6 @@
 *	You should have received a copy of the GNU General Public License					  *
 *	along with The Chili DirectX Framework.  If not, see <http://www.gnu.org/licenses/>.  *
 ******************************************************************************************/
-
-/******************************************************************************************
-*	Game code and amendments by s0lly													   *
-*	https://www.youtube.com/channel/UCOyCXEB8NTx3Xjm8UptwsIg							   *
-*	https://s0lly.itch.io/																   *
-*	https://www.instagram.com/s0lly.gaming/												   *
-******************************************************************************************/
-
 #pragma once
 #include "ChiliWin.h"
 #include <d3d11.h>
@@ -40,7 +32,7 @@ public:
 	class Exception : public ChiliException
 	{
 	public:
-		Exception( HRESULT hr,const std::wstring& note,const wchar_t* file,unsigned int line );
+		Exception(HRESULT hr, const std::wstring& note, const wchar_t* file, unsigned int line);
 		std::wstring GetErrorName() const;
 		std::wstring GetErrorDescription() const;
 		virtual std::wstring GetFullMessage() const override;
@@ -52,30 +44,18 @@ private:
 	// vertex format for the framebuffer fullscreen textured quad
 	struct FSQVertex
 	{
-		float x,y,z;		// position
-		float u,v;			// texcoords
+		float x, y, z;		// position
+		float u, v;			// texcoords
 	};
 public:
-	Graphics( class HWNDKey& key );
-	Graphics( const Graphics& ) = delete;
-	Graphics& operator=( const Graphics& ) = delete;
+	Graphics(class HWNDKey& key);
+	Graphics(const Graphics&) = delete;
+	Graphics& operator=(const Graphics&) = delete;
 	void EndFrame();
 	void BeginFrame();
-	void PutPixel( int x,int y,int r,int g,int b )
+	void PutPixel(int x, int y, int r, int g, int b)
 	{
-		PutPixel( x,y,{ unsigned char( r ),unsigned char( g ),unsigned char( b ) } );
-	}
-
-	void DrawRect(int x, int y, int width, int height, Color c)
-	{
-		for (int j = y; j < height; j++)
-		{
-			for (int i = x; i < width; i++)
-			{
-				PutPixel(i, j, c);
-			}
-		}
-		
+		PutPixel(x, y, { unsigned char(r),unsigned char(g),unsigned char(b) });
 	}
 
 	void DrawCircle(Vec2 loc, float radius, Color c)
@@ -110,6 +90,16 @@ public:
 			}
 		}
 	}
+
+	//void DrawLine()
+	//{
+	//
+	//}
+	//
+	//void DrawVector()
+	//{
+	//
+	//}
 
 	void PutPixel( int x,int y,Color c );
 	~Graphics();

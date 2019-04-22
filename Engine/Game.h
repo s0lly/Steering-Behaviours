@@ -18,26 +18,13 @@
  *	You should have received a copy of the GNU General Public License					  *
  *	along with The Chili DirectX Framework.  If not, see <http://www.gnu.org/licenses/>.  *
  ******************************************************************************************/
-
- /******************************************************************************************
- *	Game code and amendments by s0lly													   *
- *	https://www.youtube.com/channel/UCOyCXEB8NTx3Xjm8UptwsIg							   *
- *	https://s0lly.itch.io/																   *
- *	https://www.instagram.com/s0lly.gaming/												   *
- ******************************************************************************************/
-
 #pragma once
 
 #include "Keyboard.h"
 #include "Mouse.h"
 #include "Graphics.h"
-#include "Creature.h"
-#include "Vec2.h"
-#include "RelativeLocationInfo.h"
-#include <thread>
-
-
-
+#include "WorldObject.h"
+#include <vector> 
 
 class Game
 {
@@ -60,15 +47,10 @@ private:
 	/*  User Variables              */
 	/********************************/
 
-	std::vector<Creature> creatures;
+	std::vector<WorldObject> worldObjects;
 
-	Vec2 cameraLoc = Vec2(0.0f, 0.0f);
-	float cameraZoomOut = 10.0f;
+	Vec2 cameraLoc;
+	float cameraZoom;
 
-	int numObjectsToAdd = 1000;
-
-	float angle = 0.0f;
-
-	Beacon beacon;
-
+	float relAngle = 0.0f; // 3.1415f / 1.0f;
 };

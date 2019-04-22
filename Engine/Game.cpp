@@ -18,50 +18,42 @@
  *	You should have received a copy of the GNU General Public License					  *
  *	along with The Chili DirectX Framework.  If not, see <http://www.gnu.org/licenses/>.  *
  ******************************************************************************************/
-
- /******************************************************************************************
- *	Game code and amendments by s0lly													   *
- *	https://www.youtube.com/channel/UCOyCXEB8NTx3Xjm8UptwsIg							   *
- *	https://s0lly.itch.io/																   *
- *	https://www.instagram.com/s0lly.gaming/												   *
- ******************************************************************************************/
-
 #include "MainWindow.h"
 #include "Game.h"
 
-Game::Game(MainWindow& wnd)
+Game::Game( MainWindow& wnd )
 	:
-	wnd(wnd),
-	gfx(wnd)
+	wnd( wnd ),
+	gfx( wnd )
 {
-	srand(100);
+	int maxObjects = 200;
 
-	Creature newCreature = {};
-
-	int sizeOfField = 10000;
-
-	for (int i = 0; i < numObjectsToAdd; i++)
+	for (int i = 0; i < maxObjects; i++)
 	{
-		creatures.push_back(newCreature);
+		Color newColor = Colors::White;
+		float newMaxSpeed = 0.0f;
 
-		int fieldNum = rand() % 2;
+		BRAIN_TYPE brainType = BRAIN_TYPE::SCARED; // (BRAIN_TYPE)(rand() % 2);
+		
+		if (brainType == BRAIN_TYPE::SEEKER)
+		{
+			newMaxSpeed = 50.0f;
+			newColor = Colors::Red;
+		}
+		if (brainType == BRAIN_TYPE::SCARED)
+		{
+			newMaxSpeed = 500.0f;
+			newColor = Colors::Green;
+		}
 
-		creatures[i].loc.x = (float)(rand() % sizeOfField - sizeOfField / 2); // fieldNum *     + sizeOfField * 4
-		creatures[i].loc.y = (float)(rand() % sizeOfField - sizeOfField / 2);
-
-		creatures[i].radius = 40.0f;
-
-		creatures[i].direction = (((float)(rand() % 360)) / 360.0f) * PI * 2.0f;
-
-		unsigned char newR = (unsigned char)(rand() % 256);
-		unsigned char newG = 0;//(unsigned char)(rand() % 256);
-		unsigned char newB = 0;//(unsigned char)(rand() % 256);
-		creatures[i].color = Color(newR, newG, newB);
-
-		//creatures[i].color = Colors::White;
-
-		creatures[i].ID = i;
+		worldObjects.push_back(WorldObject(PhysicsInfo(brainType, Vec2((float)(rand() % (gfx.ScreenWidth)), (float)(rand() % (gfx.ScreenHeight))), Vec2(0.0f, 0.0f), worldObjects.size()), 1.0f, newMaxSpeed, newColor));// (float)(rand() % 100) - 50.0f, (float)(rand() % 100) - 50.0f), 1.0f)
 	}
+
+	//worldObjects.push_back(WorldObject(PhysicsInfo(BRAIN_TYPE::SEEKER, Vec2((float)(rand() % (gfx.ScreenWidth)), (float)(rand() % (gfx.ScreenHeight))), Vec2(0.0f, 0.0f), worldObjects.size()), 1.0f, 500.0f, Colors::Red));// (float)(rand() % 100) - 50.0f, (float)(rand() % 100) - 50.0f), 1.0f)
+
+	
+	cameraLoc = Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
+	cameraZoom = 1.0f;
 }
 
 void Game::Go()
@@ -75,134 +67,189 @@ void Game::Go()
 
 void Game::ProcessInput()
 {
-	if (wnd.kbd.KeyIsPressed(VK_UP))
-	{
-		cameraLoc.y += 100.0f;
-	}
-	if (wnd.kbd.KeyIsPressed(VK_DOWN))
-	{
-		cameraLoc.y -= 100.0f;
-	}
-	if (wnd.kbd.KeyIsPressed(VK_LEFT))
-	{
-		cameraLoc.x -= 100.0f;
-	}
-	if (wnd.kbd.KeyIsPressed(VK_RIGHT))
-	{
-		cameraLoc.x += 100.0f;
-	}
+	float camMovement = 20.0f;
 
+	float cosAngle = cos(relAngle);
+	float sinAngle = sin(relAngle);
+
+	if (wnd.kbd.KeyIsPressed('W'))
+	{
+		cameraLoc.x += camMovement * sinAngle;
+		cameraLoc.y -= camMovement * cosAngle;
+	}
+	if (wnd.kbd.KeyIsPressed('S'))
+	{
+		cameraLoc.x -= camMovement * sinAngle;
+		cameraLoc.y += camMovement * cosAngle;
+	}
 	if (wnd.kbd.KeyIsPressed('A'))
 	{
-		cameraZoomOut *= 0.9f;
+		cameraLoc.x -= camMovement * cosAngle;
+		cameraLoc.y -= camMovement * sinAngle;
 	}
+	if (wnd.kbd.KeyIsPressed('D'))
+	{
+		cameraLoc.x += camMovement * cosAngle;
+		cameraLoc.y += camMovement * sinAngle;
+	}
+
+	float camZoomMultiplier = 1.1f;
 	if (wnd.kbd.KeyIsPressed('Z'))
 	{
-		cameraZoomOut *= 1.1f;
+		cameraZoom *= camZoomMultiplier;
+	}
+	if (wnd.kbd.KeyIsPressed('X'))
+	{
+		cameraZoom /= camZoomMultiplier;
 	}
 
-	if (wnd.mouse.LeftIsPressed())
+	if (wnd.kbd.KeyIsPressed(VK_SPACE))
 	{
-		
+		Color newColor = Colors::White;
+		float newMaxSpeed = 0.0f;
 
-		float mouseRandomness = 0.0f;
+		BRAIN_TYPE brainType = BRAIN_TYPE::SEEKER; //(BRAIN_TYPE)(rand() % 2);
 
-		float fixedMouseX = wnd.mouse.GetPosX();
-		float fixedMouseY = wnd.mouse.GetPosY();
-
-		
-		float newLocX = (fixedMouseX - (float)(gfx.ScreenWidth / 2)) * (cameraZoomOut) + cameraLoc.x + (((float)(rand() % 100)) / 50.0f - 1.0f) * mouseRandomness;
-		float newLocY = -((fixedMouseY - (float)(gfx.ScreenHeight / 2)) * (cameraZoomOut) + cameraLoc.y) - (((float)(rand() % 100)) / 50.0f - 1.0f) * mouseRandomness;
-
-		if (beacon.isOn)
+		if (brainType == BRAIN_TYPE::SEEKER)
 		{
-			beacon.loc.x = newLocX * 0.02f + beacon.loc.x * 0.98f;
-			beacon.loc.y = newLocY * 0.02f + beacon.loc.y * 0.98f;
+			newMaxSpeed = 500.0f;
+			newColor = Colors::Red;
 		}
-		else
+		if (brainType == BRAIN_TYPE::SCARED)
 		{
-			beacon.loc.x = newLocX;
-			beacon.loc.y = newLocY;
+			newMaxSpeed = 80.0f;
+			newColor = Colors::Green;
 		}
-		
-		beacon.strength = 5;
 
-		beacon.isOn = true;
-	}
-	else
-	{
-		beacon.isOn = false;
+		worldObjects.push_back(WorldObject(PhysicsInfo(brainType, Vec2((float)(rand() % (gfx.ScreenWidth)), (float)(rand() % (gfx.ScreenHeight))), Vec2(0.0f, 0.0f), worldObjects.size()), 1.0f, newMaxSpeed, newColor));// (float)(rand() % 100) - 50.0f, (float)(rand() % 100) - 50.0f), 1.0f)
 	}
 }
 
 void Game::UpdateModel()
 {
-	//TOO_CLOSE = (float)(rand() % 1000);
-	//MAX_GOOD_DISTANCE = TOO_CLOSE;
-	//
-	//TOO_CLOSE = 250.0f;
-	//MAX_GOOD_DISTANCE = TOO_CLOSE;
-
-	angle += 0.1f;
-
-	float TOO_CLOSE = sin(angle) * 100.0f + 250.0f;
-	float MAX_GOOD_DISTANCE = TOO_CLOSE;
-	float GETTING_TOO_FAR = ((cos(angle) + 1.0f) / 2.0f) * ((2000.0f - MAX_GOOD_DISTANCE)) + MAX_GOOD_DISTANCE + 2000.0f;
-
-	
-
-	int numThreads = 20;
-	int size = (int)creatures.size();
-	
-	int threadSize = size / numThreads + 1;
-	
-	auto creaturesPtr = &creatures;
-	auto beaconPtr = &beacon;
-	
-	std::vector<std::thread> threadList;
-	for (int k = 0; k < numThreads; k++)
-	{
-		threadList.push_back(std::thread([creaturesPtr, k, threadSize, TOO_CLOSE, MAX_GOOD_DISTANCE, GETTING_TOO_FAR, beaconPtr]()
-		{
-			
-			for (int i = k * threadSize; (i < (k + 1) * threadSize) && (i < creaturesPtr->size()); i++)
-			{
-				(*creaturesPtr)[i].UpdateState(*creaturesPtr, TOO_CLOSE, MAX_GOOD_DISTANCE, GETTING_TOO_FAR, *beaconPtr);
-			}
-		}));
-	}
-
-	std::for_each(threadList.begin(), threadList.end(), std::mem_fn(&std::thread::join));
+	float dt = 1.0f / 60.0f; // assume 60 fps
 
 
-	//int numThreads = 20;
-	//int size = (int)creatures.size();
-	//
-	//int threadSize = size / numThreads + 1;
-	//
-	//auto creaturesPtr = &creatures;
-	//
-	//for (int i = 0; i < creaturesPtr->size(); i++)
+	//for (int i = 0; i < worldObjects.size(); i++)
 	//{
-	//	(*creaturesPtr)[i].UpdateState(*creaturesPtr);
+	//	worldObjects[i].ResetNeighbourInfo();
+	//	for (int j = 0; j < worldObjects.size(); j++)
+	//	{
+	//		if (i != j)
+	//		{
+	//			worldObjects[i].CalculateNeighbourInfo(worldObjects[j]);
+	//		}
+	//	}
 	//}
 
+	
 
-	for (int i = 0; i < creatures.size(); i++)
+	std::vector<PhysicsInfo> worldObjectPhysicsInfos;
+
+	for (int i = 0; i < worldObjects.size(); i++)
 	{
-		creatures[i].Move();
+		worldObjectPhysicsInfos.push_back(worldObjects[i].GetPhysicsInfo());
 	}
+
+	for (int i = 0; i < worldObjects.size(); i++)
+	{
+		worldObjects[i].DetermineAction(worldObjectPhysicsInfos);
+	}
+
+
+	for (int i = 0; i < worldObjects.size(); i++)
+	{
+		worldObjects[i].Update(dt);
+	}
+	
 }
 
 void Game::ComposeFrame()
 {
-	if (beacon.isOn)
+
+
+
+
+
+	cameraLoc = worldObjects[0].GetPhysicsInfo().loc;
+	
+	
+	
+	if (worldObjects[0].GetPhysicsInfo().velocity.GetMagnitude() < 0.1f)
 	{
-		gfx.DrawCircle(Vec2((beacon.loc.x - cameraLoc.x) / (cameraZoomOut)+(float)(gfx.ScreenWidth / 2), -(beacon.loc.y - cameraLoc.y) / (cameraZoomOut)+(float)(gfx.ScreenHeight / 2)), 200.0f / (cameraZoomOut), Colors::Red);
+		relAngle = (float)(rand() % 6282) / 1000.0f - 3.141f;
+	}
+	else
+	{
+		relAngle = acosf(worldObjects[0].GetPhysicsInfo().velocity.y / worldObjects[0].GetPhysicsInfo().velocity.GetMagnitude());
+		//if (velocity.y < 0.0f)
+		//{
+		//	
+		//}
+		relAngle = 3.14159f - relAngle;
+	
+		if (worldObjects[0].GetPhysicsInfo().velocity.x < 0.0f)
+		{
+			relAngle = -relAngle;
+		}
+	}
+	
+	
+	
+
+
+	if (wnd.kbd.KeyIsPressed('Q'))
+	{
+		relAngle -= 0.01f;
+	}
+	if (wnd.kbd.KeyIsPressed('E'))
+	{
+		relAngle += 0.01f;
 	}
 
-	for (auto& creature : creatures)
+	float cosAngle = cos(relAngle);
+	float sinAngle = sin(relAngle);
+
+
+	// Draw gridlines
+	for (int y = 0; y < gfx.ScreenHeight; y++)
 	{
-		gfx.DrawCircle(Vec2((creature.loc.x - cameraLoc.x) / (cameraZoomOut)+(float)(gfx.ScreenWidth / 2), -(creature.loc.y - cameraLoc.y) / (cameraZoomOut)+(float)(gfx.ScreenHeight / 2)), creature.radius / (cameraZoomOut), creature.color);
+		for (int x = 0; x < gfx.ScreenWidth; x++)
+		{
+			Vec2 worldLoc = Vec2();
+
+			worldLoc.x = cameraLoc.x + (-(float)(gfx.ScreenWidth / 2) + (float)x) * cameraZoom * cosAngle - (-(float)(gfx.ScreenHeight / 2) + (float)y) * cameraZoom * sinAngle;
+			worldLoc.y = cameraLoc.y + (-(float)(gfx.ScreenHeight / 2) + (float)y) * cameraZoom * cosAngle + (-(float)(gfx.ScreenWidth / 2) + (float)x) * cameraZoom * sinAngle;
+
+			int xCheck = abs((int)worldLoc.x);
+			int yCheck = abs((int)worldLoc.y);
+
+			if (xCheck % 500 == 0 || yCheck % 500 == 0
+				|| xCheck % 500 == 1 || yCheck % 500 == 1
+				|| xCheck % 500 == 2 || yCheck % 500 == 2
+				|| xCheck % 500 == 3 || yCheck % 500 == 3)
+			{
+				gfx.PutPixel(x, y, Colors::Blue);
+			}
+		}
 	}
+
+
+
+
+	for (int i = 0; i < worldObjects.size(); i++)
+	{
+		Vec2 relativeLoc = Vec2();
+		
+		relativeLoc.x = (worldObjects[i].GetPhysicsInfo().loc - cameraLoc).x * cosAngle + (worldObjects[i].GetPhysicsInfo().loc - cameraLoc).y * sinAngle;
+		relativeLoc.y = (worldObjects[i].GetPhysicsInfo().loc - cameraLoc).y * cosAngle - (worldObjects[i].GetPhysicsInfo().loc - cameraLoc).x * sinAngle;
+
+
+		gfx.DrawCircle((relativeLoc) / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2)), worldObjects[i].GetRadius() / cameraZoom, worldObjects[i].GetColor());
+	}
+
+
+	
+
+	// draw vectors!
 }

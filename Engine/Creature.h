@@ -74,7 +74,8 @@ static std::vector<RelativeLocationInfo> GetRelativeLocationInfos(const Creature
 				(otherCreatures[i].loc.x - creature.loc.x) * sinDir - (otherCreatures[i].loc.y - creature.loc.y) * cosDir
 				),
 				distSqrd,
-				otherCreatures[i].ID
+				otherCreatures[i].ID,
+				otherCreatures[i].direction
 			)
 		);
 	}
