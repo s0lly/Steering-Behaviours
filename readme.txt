@@ -8,7 +8,7 @@ I've also included a "beacon" effect, which attracts the entire swarm - although
 
 It relies on only a few functions and objects to do all the work, so hopefully the code is quite easy to understand and follow.
 
-The codebase can be found here: https://github.com/s0lly/Swarm-AI
+The codebase can be found here: https://github.com/s0lly/Steering-Behaviours
 
 Please let me know how I could improve this!
 
