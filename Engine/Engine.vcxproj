@@ -149,6 +149,7 @@
     <ClInclude Include="Mouse.h" />
     <ClInclude Include="PhysicsInfo.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="RetroContent.h" />
     <ClInclude Include="Sound.h" />
     <ClInclude Include="SoundEffect.h" />
     <ClInclude Include="Behaviour.h" />
@@ -164,6 +165,7 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="Mouse.cpp" />
+    <ClCompile Include="RetroContent.cpp" />
     <ClCompile Include="Sound.cpp" />
   </ItemGroup>
   <ItemGroup>

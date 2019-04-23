@@ -72,6 +72,9 @@
     <ClInclude Include="PhysicsInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="RetroContent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DXErr.cpp">
@@ -99,6 +102,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="COMInitializer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RetroContent.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

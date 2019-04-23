@@ -24,6 +24,7 @@
 #include "Mouse.h"
 #include "Graphics.h"
 #include "WorldObject.h"
+#include "RetroContent.h"
 #include <vector> 
 
 class Game
@@ -53,4 +54,19 @@ private:
 	float cameraZoom;
 
 	float relAngle = 0.0f; // 3.1415f / 1.0f;
+
+	bool spaceIsPressed = false;
+	bool spaceIsActive = true;
+
+	bool f1IsPressed = false;
+	bool f1IsActive = false;
+
+	bool f2IsPressed = false;
+	bool f2IsActive = false;
+
+	bool f3IsPressed = false;
+	bool f3IsActive = false;
+
+	bool rightIsPressed = false;
+	bool rightIsActive = false;
 };

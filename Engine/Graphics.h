@@ -58,6 +58,20 @@ public:
 		PutPixel(x, y, { unsigned char(r),unsigned char(g),unsigned char(b) });
 	}
 
+	void PutRect(int x, int y, int length, int height, Color c)
+	{
+		for (int j = y; j < y + height; j++)
+		{
+			for (int i = x; i < x + length; i++)
+			{
+				if (i >= 0 && i < ScreenWidth && j >= 0 && j < ScreenHeight)
+				{
+					PutPixel(i, j, c);
+				}
+			}
+		}
+	}
+
 	void DrawCircle(Vec2 loc, float radius, Color c)
 	{
 		int left = (int)(loc.x - radius);
