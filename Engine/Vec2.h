@@ -72,3 +72,67 @@ struct Vec2
 	float x;
 	float y;
 };
+
+class Line
+{
+
+public:
+
+	Line() {}
+
+	Line(Vec2 v0, Vec2 v1)
+	{
+		// if vertical line
+		if (!(v0.x == v1.x))
+		{
+			m = (v1.y - v0.y) / (v1.x - v0.x);
+			c = v1.y - m * v1.x;
+
+			if (m > 1.0f || m < -1.0f)
+			{
+				reversedLine = true;
+			}
+		}
+		else
+		{
+			reversedLine = true;
+		}
+
+		if (reversedLine)
+		{
+			m = (v1.x - v0.x) / (v1.y - v0.y);
+			c = v1.x - m * v1.y;
+		}
+	}
+
+	float GetY(float x)
+	{
+		if (!reversedLine)
+		{
+			return m * x + c;
+		}
+		else
+		{
+			return (x - c) / m;
+		}
+	}
+
+	float GetX(float y)
+	{
+		if (!reversedLine)
+		{
+			return (y - c) / m;
+		}
+		else
+		{
+			return m * y + c;
+		}
+	}
+
+	float m = 0.0f;
+	float c = 0.0f;
+	bool reversedLine = false;
+
+private:
+
+};

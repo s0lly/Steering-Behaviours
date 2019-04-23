@@ -33,7 +33,7 @@ public:
 		FormBehaviours();
 	}
 
-	virtual Vec2 DetermineDesiredVelocity(std::vector<PhysicsInfo> worldObjectPhysicsInfos) = 0;
+	virtual PhysicsInfo DetermineDesiredVelocity(std::vector<PhysicsInfo> worldObjectPhysicsInfos) = 0;
 
 	void FormBehaviours()
 	{
@@ -62,7 +62,7 @@ public:
 		decisionMade = false;
 	}
 
-	Vec2 DetermineDesiredVelocity(std::vector<PhysicsInfo> worldObjectPhysicsInfos) override
+	PhysicsInfo DetermineDesiredVelocity(std::vector<PhysicsInfo> worldObjectPhysicsInfos) override
 	{
 		for (int j = 0; j < worldObjectPhysicsInfos.size(); j++)
 		{
@@ -75,7 +75,7 @@ public:
 		int maxSeekTargets = 1;
 
 
-		Vec2 desiredVelocity;
+		self.desiredVelocity = Vec2();
 
 		for (int j = 0; j < worldObjectPhysicsInfos.size() && !decisionMade; j++)
 		{
@@ -113,15 +113,15 @@ public:
 
 		if ((fleeVec).GetMagnitude() > 0.00001f)
 		{
-			desiredVelocity = desiredVelocity + fleeVec.Normalize() / (fleeVec).GetMagnitude();
+			self.desiredVelocity = self.desiredVelocity + fleeVec.Normalize() / (fleeVec).GetMagnitude();
 		}
 
 		if ((seekVec).GetMagnitude() > 0.00001f)
 		{
-			desiredVelocity = desiredVelocity + seekVec.Normalize() / (seekVec).GetMagnitude();
+			self.desiredVelocity = self.desiredVelocity + seekVec.Normalize() / (seekVec).GetMagnitude();
 		}
 		
-		if (desiredVelocity.GetMagnitude() < maxDesiredVelocity)
+		if (self.desiredVelocity.GetMagnitude() < maxDesiredVelocity)
 		{
 			
 		}
@@ -134,7 +134,7 @@ public:
 		//	// Wander
 		//}
 
-		return desiredVelocity;
+		return self;
 	}
 
 
@@ -157,7 +157,7 @@ public:
 		decisionMade = false;
 	}
 
-	Vec2 DetermineDesiredVelocity(std::vector<PhysicsInfo> worldObjectPhysicsInfos) override
+	PhysicsInfo DetermineDesiredVelocity(std::vector<PhysicsInfo> worldObjectPhysicsInfos) override
 	{
 		for (int j = 0; j < worldObjectPhysicsInfos.size(); j++)
 		{
@@ -166,7 +166,7 @@ public:
 
 		std::sort(worldObjectPhysicsInfos.begin(), worldObjectPhysicsInfos.end());
 
-		Vec2 desiredVelocity;
+		self.desiredVelocity = Vec2();
 
 		for (int j = 0; j < worldObjectPhysicsInfos.size() && !decisionMade; j++)
 		{
@@ -215,6 +215,10 @@ public:
 			}
 		}
 
+		self.desiredAlign = Vec2();
+		self.desiredFlee = Vec2();
+		self.desiredSeek = Vec2();
+
 		Vec2 fleeVec = behaviours[BEHAVIOUR_TYPE::FLEE]->PerformLogicAndGetVelocityVector();
 		Vec2 seekVec = behaviours[BEHAVIOUR_TYPE::SEEK]->PerformLogicAndGetVelocityVector();
 		Vec2 alignVec = behaviours[BEHAVIOUR_TYPE::ALIGN]->PerformLogicAndGetVelocityVector();
@@ -223,17 +227,20 @@ public:
 
 		if ((alignVec).GetMagnitude() > 0.00001f)
 		{
-			desiredVelocity = desiredVelocity + (alignVec.Normalize() / (alignVec).GetMagnitude()) * FLEE_SCALE;
+			self.desiredAlign = (alignVec) * ALIGN_SCALE; //  / (alignVec).GetMagnitude()
+			self.desiredVelocity = self.desiredVelocity + self.desiredAlign;
 		}
 
 		if ((fleeVec).GetMagnitude() > 0.00001f)
 		{
-			desiredVelocity = desiredVelocity + (fleeVec.Normalize() / (fleeVec).GetMagnitude()) * AVOID_SCALE;
+			self.desiredFlee = (fleeVec / ((fleeVec).GetMagnitudeSqrd() / 1000.0f)) * AVOID_SCALE; //  
+			self.desiredVelocity = self.desiredVelocity + self.desiredFlee;
 		}
 
 		if ((seekVec).GetMagnitude() > 0.00001f)
 		{
-			desiredVelocity = desiredVelocity + (seekVec.Normalize() / (seekVec).GetMagnitude()) * SEEK_SCALE;
+			self.desiredSeek = (seekVec) * SEEK_SCALE; //  / (seekVec).GetMagnitude()
+			self.desiredVelocity = self.desiredVelocity + self.desiredSeek;
 		}
 
 
@@ -252,60 +259,60 @@ public:
 
 		// Wander
 
-		//randomness += (float)(rand() % 100) / 100.0f;
-		//
-		//float relAngle = 0.0f;
-		//
-		//if (desiredVelocity.GetMagnitude() < 0.1f)
-		//{
-		//	relAngle = (float)(rand() % 6282) / 1000.0f - 3.141f;
-		//	if (self.velocity.GetMagnitude() < 5.0f)
-		//	{
-		//		float cosAngle = cos(relAngle);
-		//		float sinAngle = sin(relAngle);
-		//		desiredVelocity.x = 1.0f * sinAngle;
-		//		desiredVelocity.y = 1.0f * cosAngle;
-		//	}
-		//}
-		//else
-		//{
-		//	relAngle = acosf(desiredVelocity.y / desiredVelocity.GetMagnitude());
-		//	//if (velocity.y < 0.0f)
-		//	//{
-		//	//	angle = 3.14159f - angle;
-		//	//}
-		//	if (desiredVelocity.x < 0.0f)
-		//	{
-		//		relAngle = -relAngle;
-		//	}
-		//}
-		//
-		//float cosAngle = cos(relAngle);
-		//float sinAngle = sin(relAngle);
-		//
-		//float randSideways = (float)(sin(randomness)) / 1.0f;
-		//
-		//Vec2 sidewaysLoc = Vec2(randSideways, 1.0f);
-		//Vec2 relativeLoc = Vec2();
-		//
-		//relativeLoc.x = (sidewaysLoc).x * cosAngle + (sidewaysLoc).y * sinAngle;
-		//relativeLoc.y = (sidewaysLoc).y * cosAngle - (sidewaysLoc).x * sinAngle;
-		//
-		//desiredVelocity = desiredVelocity + (relativeLoc.Normalize()) / 1.0f;
+		randomness += (float)(rand() % 100) / 100.0f;
+		
+		float relAngle = 0.0f;
+		
+		if (self.desiredVelocity.GetMagnitude() < 0.1f)
+		{
+			relAngle = (float)(rand() % 6282) / 1000.0f - 3.141f;
+			if (self.velocity.GetMagnitude() < 5.0f)
+			{
+				float cosAngle = cos(relAngle);
+				float sinAngle = sin(relAngle);
+				self.desiredVelocity.x = 1.0f * sinAngle;
+				self.desiredVelocity.y = 1.0f * cosAngle;
+			}
+		}
+		else
+		{
+			relAngle = acosf(self.desiredVelocity.y / self.desiredVelocity.GetMagnitude());
+			//if (velocity.y < 0.0f)
+			//{
+			//	angle = 3.14159f - angle;
+			//}
+			if (self.desiredVelocity.x < 0.0f)
+			{
+				relAngle = -relAngle;
+			}
+		}
+		
+		float cosAngle = cos(relAngle);
+		float sinAngle = sin(relAngle);
+		
+		float randSideways = (float)(sin(randomness)) / 1.0f;
+		
+		Vec2 sidewaysLoc = Vec2(randSideways, 1.0f);
+		Vec2 relativeLoc = Vec2();
+		
+		relativeLoc.x = (sidewaysLoc).x * cosAngle + (sidewaysLoc).y * sinAngle;
+		relativeLoc.y = (sidewaysLoc).y * cosAngle - (sidewaysLoc).x * sinAngle;
+		
+		self.desiredVelocity = self.desiredVelocity + (relativeLoc.Normalize()) * 10.0f;
 
-		return desiredVelocity;
+		return self;
 	}
 
 
 private:
 	float FLEE_DISTANCE_SQRD = 100.0f * 100.0f;
 	float AVOID_DISTANCE_SQRD = 100.0f * 100.0f;
-	float SEEK_DISTANCE_SQRD = 2000.0f * 2000.0f;
+	float SEEK_DISTANCE_SQRD = 500.0f * 500.0f;
 	float ALIGN_DISTANCE_SQRD = 2000.0f * 2000.0f;
 
 	float FLEE_SCALE = 1.0f;
 	float AVOID_SCALE = 1.0f;
 	float SEEK_SCALE = 1.0f;
-	float ALIGN_SCALE = 1.0f;
+	float ALIGN_SCALE = 0.5f;
 
 };

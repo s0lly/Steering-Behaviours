@@ -36,7 +36,12 @@ struct PhysicsInfo
 		velocity(in_physicsInfo.velocity),
 		ID(in_physicsInfo.ID),
 		relativeDistSqrd(in_physicsInfo.relativeDistSqrd),
-		relativeLoc(in_physicsInfo.relativeLoc)
+		relativeLoc(in_physicsInfo.relativeLoc),
+		isInEyesight(in_physicsInfo.isInEyesight),
+		desiredVelocity(in_physicsInfo.desiredVelocity),
+		desiredAlign(in_physicsInfo.desiredAlign),
+		desiredSeek(in_physicsInfo.desiredSeek),
+		desiredFlee(in_physicsInfo.desiredFlee)
 	{
 	}
 
@@ -60,7 +65,7 @@ struct PhysicsInfo
 		{
 			float angle = 0.0f;
 
-			if (viewerVelocity.GetMagnitude() < 0.01f)
+			if (viewerVelocity.GetMagnitude() < 1.0f)
 			{
 				angle = (float)(rand() % 6282) / 1000.0f - 3.141f;
 			}
@@ -83,7 +88,7 @@ struct PhysicsInfo
 			relativeLoc.x = (loc - locToCompare).x * cosAngle - (loc - locToCompare).y * sinAngle;
 			relativeLoc.y = (loc - locToCompare).y * cosAngle + (loc - locToCompare).x * sinAngle;
 
-			isInEyesight = ((relativeLoc.y > 0) && (abs(relativeLoc.x) < relativeLoc.y));
+			isInEyesight = ((relativeLoc.y > 0));
 		}
 		else
 		{
@@ -99,4 +104,8 @@ struct PhysicsInfo
 	float relativeDistSqrd;
 	Vec2 relativeLoc;
 	bool isInEyesight;
+	Vec2 desiredVelocity;
+	Vec2 desiredAlign;
+	Vec2 desiredSeek;
+	Vec2 desiredFlee;
 };

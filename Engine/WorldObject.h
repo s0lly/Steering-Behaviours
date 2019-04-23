@@ -32,7 +32,7 @@ public:
 	{
 		brainPtr->Refresh(physicsInfo);
 
-		desiredVelocity = brainPtr->DetermineDesiredVelocity(worldObjectPhysicsInfos);
+		physicsInfo = brainPtr->DetermineDesiredVelocity(worldObjectPhysicsInfos);
 	}
 
 	//void CalculateNeighbourInfo(WorldObject &targetObject)
@@ -125,9 +125,9 @@ public:
 		//	
 		//}
 
-		desiredVelocity = (desiredVelocity).Normalize() * maxSpeed;
+		physicsInfo.desiredVelocity = (physicsInfo.desiredVelocity).Normalize() * maxSpeed;
 
-		ApplyForce(desiredVelocity - physicsInfo.velocity, dt);
+		ApplyForce(physicsInfo.desiredVelocity - physicsInfo.velocity, dt);
 
 		Move(dt);
 	}
@@ -181,7 +181,6 @@ private:
 	float maxSpeed;
 	float radius = 5.0f;
 	Color color = Colors::Red;
-	Vec2 desiredVelocity;
 	Brain* brainPtr = nullptr;
 	//Vec2 seperationVelocity;
 	//Vec2 alignmentVelocity;

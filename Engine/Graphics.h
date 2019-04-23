@@ -91,10 +91,46 @@ public:
 		}
 	}
 
-	//void DrawLine()
-	//{
-	//
-	//}
+	void DrawLine(Line line, Vec2 startLoc, Vec2 endLoc, Color c)
+	{
+		if (!line.reversedLine)
+		{
+			if (startLoc.x > endLoc.x)
+			{
+				std::swap(startLoc, endLoc);
+			}
+			for (int i = (int)startLoc.x; (int)i < endLoc.x; i++)
+			{
+				if (i >= 0 && i < ScreenWidth)
+				{
+					float yPos = line.GetY((float)i);
+					if (yPos >= 0 && yPos < ScreenHeight)
+					{
+						PutPixel((int)i, (int)yPos, c);
+					}
+				}
+			}
+		}
+		else
+		{
+			if (startLoc.y > endLoc.y)
+			{
+				std::swap(startLoc, endLoc);
+			}
+			for (int j = (int)startLoc.y; j < (int)endLoc.y; j++)
+			{
+				if (j >= 0 && j < ScreenHeight)
+				{
+					float xPos = line.GetX((float)j);
+					if (xPos >= 0 && xPos < ScreenWidth)
+					{
+						PutPixel((int)xPos, (int)j, c);
+					}
+				}
+			}
+		}
+	}
+
 	//
 	//void DrawVector()
 	//{

@@ -90,6 +90,7 @@ protected:
 	PhysicsInfo self;
 	std::vector<PhysicsInfo> targets;
 	BEHAVIOUR_TYPE behaviourType;
+	Vec2 resultantVector;
 
 };
 
@@ -107,16 +108,16 @@ public:
 
 	Vec2 PerformLogicAndGetVelocityVector()
 	{
+		resultantVector = Vec2();
+
 		if (targets.size() > 0)
 		{
-			Vec2 averageLoc = FindWeightedAverageLocOfTargetsByDistance();
+			Vec2 averageLoc = FindAverageLocOfTargets();
 
-			return (averageLoc - self.loc);
+			resultantVector = (averageLoc - self.loc);
 		}
-		else
-		{
-			return Vec2();
-		}
+
+		return resultantVector;
 	}
 
 
@@ -138,17 +139,16 @@ public:
 
 	Vec2 PerformLogicAndGetVelocityVector()
 	{
+		resultantVector = Vec2();
+
 		if (targets.size() > 0)
 		{
 			Vec2 averageLoc = FindWeightedAverageLocOfTargetsByDistance();
 
-			return (self.loc - averageLoc);
+			resultantVector = (self.loc - averageLoc);
 		}
-		else
-		{
-			return Vec2();
-		}
-		
+
+		return resultantVector;
 	}
 
 
@@ -170,17 +170,16 @@ public:
 
 	Vec2 PerformLogicAndGetVelocityVector()
 	{
+		resultantVector = Vec2();
+
 		if (targets.size() > 0)
 		{
 			Vec2 averageVelocity = FindWeightedAverageVelocityOfTargetsByDistance();
 
-			return (averageVelocity);
-		}
-		else
-		{
-			return Vec2();
+			resultantVector = averageVelocity;
 		}
 
+		return resultantVector;
 	}
 
 

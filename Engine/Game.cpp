@@ -26,7 +26,7 @@ Game::Game( MainWindow& wnd )
 	wnd( wnd ),
 	gfx( wnd )
 {
-	int maxObjects = 200;
+	int maxObjects = 50;
 
 	for (int i = 0; i < maxObjects; i++)
 	{
@@ -248,8 +248,111 @@ void Game::ComposeFrame()
 		gfx.DrawCircle((relativeLoc) / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2)), worldObjects[i].GetRadius() / cameraZoom, worldObjects[i].GetColor());
 	}
 
+	// Draw velocity vector
 
+	Vec2 lineStart = Vec2() + cameraLoc;
+	Vec2 lineEnd = worldObjects[0].GetPhysicsInfo().velocity + cameraLoc;
 	
+	Vec2 relativeLocStart = Vec2();
+	relativeLocStart.x = (lineStart - cameraLoc).x * cosAngle + (lineStart - cameraLoc).y * sinAngle;
+	relativeLocStart.y = (lineStart - cameraLoc).y * cosAngle - (lineStart - cameraLoc).x * sinAngle;
 
-	// draw vectors!
+	relativeLocStart = relativeLocStart / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
+
+	Vec2 relativeLocEnd = Vec2();
+	relativeLocEnd.x = (lineEnd - cameraLoc).x * cosAngle + (lineEnd - cameraLoc).y * sinAngle;
+	relativeLocEnd.y = (lineEnd - cameraLoc).y * cosAngle - (lineEnd - cameraLoc).x * sinAngle;
+
+	relativeLocEnd = relativeLocEnd / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
+
+
+	gfx.DrawLine(Line(relativeLocStart, relativeLocEnd), relativeLocStart, relativeLocEnd, Colors::Magenta);
+	gfx.DrawCircle((relativeLocEnd), 5.0f / cameraZoom, Colors::Magenta);
+
+
+	// Draw velocity vector
+
+	//Vec2 line2Start = Vec2() + cameraLoc;
+	//Vec2 line2End = worldObjects[0].GetPhysicsInfo().desiredVelocity + cameraLoc;
+	//
+	//Vec2 relativeLoc2Start = Vec2();
+	//relativeLoc2Start.x = (line2Start - cameraLoc).x * cosAngle + (line2Start - cameraLoc).y * sinAngle;
+	//relativeLoc2Start.y = (line2Start - cameraLoc).y * cosAngle - (line2Start - cameraLoc).x * sinAngle;
+	//
+	//relativeLoc2Start = relativeLoc2Start / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
+	//
+	//Vec2 relativeLoc2End = Vec2();
+	//relativeLoc2End.x = (line2End - cameraLoc).x * cosAngle + (line2End - cameraLoc).y * sinAngle;
+	//relativeLoc2End.y = (line2End - cameraLoc).y * cosAngle - (line2End - cameraLoc).x * sinAngle;
+	//
+	//relativeLoc2End = relativeLoc2End / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
+	//
+	//
+	//gfx.DrawLine(Line(relativeLoc2Start, relativeLoc2End), relativeLoc2Start, relativeLoc2End, Colors::Cyan);
+	//gfx.DrawCircle((relativeLoc2End), 5.0f / cameraZoom, Colors::Cyan);
+
+	// Draw Align vector
+
+	Vec2 lineAlignStart = Vec2() + cameraLoc;
+	Vec2 lineAlignEnd = worldObjects[0].GetPhysicsInfo().desiredAlign + cameraLoc;
+
+	Vec2 relativeLocAlignStart = Vec2();
+	relativeLocAlignStart.x = (lineAlignStart - cameraLoc).x * cosAngle + (lineAlignStart - cameraLoc).y * sinAngle;
+	relativeLocAlignStart.y = (lineAlignStart - cameraLoc).y * cosAngle - (lineAlignStart - cameraLoc).x * sinAngle;
+
+	relativeLocAlignStart = relativeLocAlignStart / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
+
+	Vec2 relativeLocAlignEnd = Vec2();
+	relativeLocAlignEnd.x = (lineAlignEnd - cameraLoc).x * cosAngle + (lineAlignEnd - cameraLoc).y * sinAngle;
+	relativeLocAlignEnd.y = (lineAlignEnd - cameraLoc).y * cosAngle - (lineAlignEnd - cameraLoc).x * sinAngle;
+
+	relativeLocAlignEnd = relativeLocAlignEnd / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
+
+
+	gfx.DrawLine(Line(relativeLocAlignStart, relativeLocAlignEnd), relativeLocAlignStart, relativeLocAlignEnd, Colors::White);
+	gfx.DrawCircle((relativeLocAlignEnd), 5.0f / cameraZoom, Colors::White);
+
+	// Draw Seek vector
+
+	Vec2 lineSeekStart = Vec2() + cameraLoc;
+	Vec2 lineSeekEnd = worldObjects[0].GetPhysicsInfo().desiredSeek + cameraLoc;
+
+	Vec2 relativeLocSeekStart = Vec2();
+	relativeLocSeekStart.x = (lineSeekStart - cameraLoc).x * cosAngle + (lineSeekStart - cameraLoc).y * sinAngle;
+	relativeLocSeekStart.y = (lineSeekStart - cameraLoc).y * cosAngle - (lineSeekStart - cameraLoc).x * sinAngle;
+
+	relativeLocSeekStart = relativeLocSeekStart / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
+
+	Vec2 relativeLocSeekEnd = Vec2();
+	relativeLocSeekEnd.x = (lineSeekEnd - cameraLoc).x * cosAngle + (lineSeekEnd - cameraLoc).y * sinAngle;
+	relativeLocSeekEnd.y = (lineSeekEnd - cameraLoc).y * cosAngle - (lineSeekEnd - cameraLoc).x * sinAngle;
+
+	relativeLocSeekEnd = relativeLocSeekEnd / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
+
+
+	gfx.DrawLine(Line(relativeLocSeekStart, relativeLocSeekEnd), relativeLocSeekStart, relativeLocSeekEnd, Colors::Red);
+	gfx.DrawCircle((relativeLocSeekEnd), 5.0f / cameraZoom, Colors::Red);
+
+	// Draw Flee vector
+
+	Vec2 lineFleeStart = Vec2() + cameraLoc;
+	Vec2 lineFleeEnd = worldObjects[0].GetPhysicsInfo().desiredFlee + cameraLoc;
+
+	Vec2 relativeLocFleeStart = Vec2();
+	relativeLocFleeStart.x = (lineFleeStart - cameraLoc).x * cosAngle + (lineFleeStart - cameraLoc).y * sinAngle;
+	relativeLocFleeStart.y = (lineFleeStart - cameraLoc).y * cosAngle - (lineFleeStart - cameraLoc).x * sinAngle;
+
+	relativeLocFleeStart = relativeLocFleeStart / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
+
+	Vec2 relativeLocFleeEnd = Vec2();
+	relativeLocFleeEnd.x = (lineFleeEnd - cameraLoc).x * cosAngle + (lineFleeEnd - cameraLoc).y * sinAngle;
+	relativeLocFleeEnd.y = (lineFleeEnd - cameraLoc).y * cosAngle - (lineFleeEnd - cameraLoc).x * sinAngle;
+
+	relativeLocFleeEnd = relativeLocFleeEnd / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
+
+
+	gfx.DrawLine(Line(relativeLocFleeStart, relativeLocFleeEnd), relativeLocFleeStart, relativeLocFleeEnd, Colors::Yellow);
+	gfx.DrawCircle((relativeLocFleeEnd), 5.0f / cameraZoom, Colors::Yellow);
+
+
 }
