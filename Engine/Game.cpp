@@ -26,18 +26,18 @@ Game::Game( MainWindow& wnd )
 	wnd( wnd ),
 	gfx( wnd )
 {
-	int maxObjects = 50;
+	int maxObjects = 100;
 
 	for (int i = 0; i < maxObjects; i++)
 	{
 		Color newColor = Colors::White;
 		float newMaxSpeed = 0.0f;
 
-		BRAIN_TYPE brainType = BRAIN_TYPE::SCARED; // (BRAIN_TYPE)(rand() % 2);
+		BRAIN_TYPE brainType = i == 0 ? BRAIN_TYPE::SEEKER : BRAIN_TYPE::SCARED; // (BRAIN_TYPE)(rand() % 2);
 		
 		if (brainType == BRAIN_TYPE::SEEKER)
 		{
-			newMaxSpeed = 50.0f;
+			newMaxSpeed = 500.0f;
 			newColor = Colors::Red;
 		}
 		if (brainType == BRAIN_TYPE::SCARED)
@@ -61,7 +61,7 @@ void Game::Go()
 	gfx.BeginFrame();	
 	ProcessInput();
 
-	if (spaceIsActive || rightIsActive)
+	if (spaceIsActive || crtlIsActive)
 	{
 		UpdateModel();
 	}
@@ -125,6 +125,24 @@ void Game::ProcessInput()
 		f3IsPressed = false;
 	}
 
+	if (wnd.kbd.KeyIsPressed(VK_CONTROL))
+	{
+		if (!crtlIsPressed)
+		{
+			crtlIsPressed = true;
+			crtlIsActive = true;
+		}
+		else
+		{
+			crtlIsActive = false;
+		}
+	}
+	else
+	{
+		crtlIsPressed = false;
+		crtlIsActive = false;
+	}
+
 	if (wnd.kbd.KeyIsPressed(VK_RIGHT))
 	{
 		if (!rightIsPressed)
@@ -141,6 +159,41 @@ void Game::ProcessInput()
 	{
 		rightIsPressed = false;
 		rightIsActive = false;
+	}
+
+	if (wnd.kbd.KeyIsPressed(VK_LEFT))
+	{
+		if (!leftIsPressed)
+		{
+			leftIsPressed = true;
+			leftIsActive = true;
+		}
+		else
+		{
+			leftIsActive = false;
+		}
+	}
+	else
+	{
+		leftIsPressed = false;
+		leftIsActive = false;
+	}
+
+	if (leftIsActive)
+	{
+		currentViewedWorldObject--;
+		if (currentViewedWorldObject < 0)
+		{
+			currentViewedWorldObject = worldObjects.size() - 1;
+		}
+	}
+	if (rightIsActive)
+	{
+		currentViewedWorldObject++;
+		if (currentViewedWorldObject > worldObjects.size() - 1)
+		{
+			currentViewedWorldObject = 0;
+		}
 	}
 
 
@@ -250,24 +303,24 @@ void Game::ComposeFrame()
 
 
 
-	cameraLoc = worldObjects[0].GetPhysicsInfo().loc;
+	cameraLoc = worldObjects[currentViewedWorldObject].GetPhysicsInfo().loc;
 	
 	
 	
-	if (worldObjects[0].GetPhysicsInfo().velocity.GetMagnitude() < 0.1f)
+	if (worldObjects[currentViewedWorldObject].GetPhysicsInfo().velocity.GetMagnitude() < 0.1f)
 	{
 		relAngle = (float)(rand() % 6282) / 1000.0f - 3.141f;
 	}
 	else
 	{
-		relAngle = acosf(worldObjects[0].GetPhysicsInfo().velocity.y / worldObjects[0].GetPhysicsInfo().velocity.GetMagnitude());
+		relAngle = acosf(worldObjects[currentViewedWorldObject].GetPhysicsInfo().velocity.y / worldObjects[currentViewedWorldObject].GetPhysicsInfo().velocity.GetMagnitude());
 		//if (velocity.y < 0.0f)
 		//{
 		//	
 		//}
 		relAngle = 3.14159f - relAngle;
 	
-		if (worldObjects[0].GetPhysicsInfo().velocity.x < 0.0f)
+		if (worldObjects[currentViewedWorldObject].GetPhysicsInfo().velocity.x < 0.0f)
 		{
 			relAngle = -relAngle;
 		}
@@ -327,14 +380,14 @@ void Game::ComposeFrame()
 		gfx.DrawCircle((relativeLoc) / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2)), worldObjects[i].GetRadius() / cameraZoom, worldObjects[i].GetColor());
 	}
 
-	RetroContent::DrawString(gfx, "VECTORS", Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 3 / 5)), 6, Colors::Green);
+	RetroContent::DrawString(gfx, "VECTORS", Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 1 / 2)), 6, Colors::Green);
 
 	if (f1IsActive)
 	{
 		// Draw velocity vector
 
 		Vec2 lineStart = Vec2() + cameraLoc;
-		Vec2 lineEnd = worldObjects[0].GetPhysicsInfo().velocity + cameraLoc;
+		Vec2 lineEnd = worldObjects[currentViewedWorldObject].GetPhysicsInfo().velocity + cameraLoc;
 
 		Vec2 relativeLocStart = Vec2();
 		relativeLocStart.x = (lineStart - cameraLoc).x * cosAngle + (lineStart - cameraLoc).y * sinAngle;
@@ -354,11 +407,11 @@ void Game::ComposeFrame()
 
 
 
-		RetroContent::DrawString(gfx, "CURRENT", Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 3 / 5) + 100.0f), 3, Colors::Magenta);
+		RetroContent::DrawString(gfx, "CURRENT", Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 1 / 2) + 100.0f), 3, Colors::Magenta);
 	}
 	else
 	{
-		RetroContent::DrawString(gfx, "CURRENT", Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 3 / 5) + 100.0f), 3, Colors::Gray);
+		RetroContent::DrawString(gfx, "CURRENT", Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 1 / 2) + 100.0f), 3, Colors::Gray);
 	}
 
 
@@ -368,7 +421,7 @@ void Game::ComposeFrame()
 		// Draw desired velocity vector
 
 		Vec2 line2Start = Vec2() + cameraLoc;
-		Vec2 line2End = worldObjects[0].GetPhysicsInfo().desiredVelocity + cameraLoc;
+		Vec2 line2End = worldObjects[currentViewedWorldObject].GetPhysicsInfo().desiredVelocity + cameraLoc;
 
 		Vec2 relativeLoc2Start = Vec2();
 		relativeLoc2Start.x = (line2Start - cameraLoc).x * cosAngle + (line2Start - cameraLoc).y * sinAngle;
@@ -386,93 +439,113 @@ void Game::ComposeFrame()
 		gfx.DrawLine(Line(relativeLoc2Start, relativeLoc2End), relativeLoc2Start, relativeLoc2End, Colors::Cyan);
 		gfx.DrawCircle((relativeLoc2End), 5.0f / cameraZoom, Colors::Cyan);
 
-		RetroContent::DrawString(gfx, "DESIRED", Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 3 / 5) + 150.0f), 3, Colors::Cyan);
+		RetroContent::DrawString(gfx, "DESIRED", Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 1 / 2) + 150.0f), 3, Colors::Cyan);
 	}
 	else
 	{
-		RetroContent::DrawString(gfx, "DESIRED", Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 3 / 5) + 150.0f), 3, Colors::Gray);
+		RetroContent::DrawString(gfx, "DESIRED", Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 1 / 2) + 150.0f), 3, Colors::Gray);
 	}
 
 	if (f3IsActive)
 	{
 		// Draw Align vector
 
-		Vec2 lineAlignStart = Vec2() + cameraLoc;
-		Vec2 lineAlignEnd = worldObjects[0].GetPhysicsInfo().desiredAlign + cameraLoc;
-
-		Vec2 relativeLocAlignStart = Vec2();
-		relativeLocAlignStart.x = (lineAlignStart - cameraLoc).x * cosAngle + (lineAlignStart - cameraLoc).y * sinAngle;
-		relativeLocAlignStart.y = (lineAlignStart - cameraLoc).y * cosAngle - (lineAlignStart - cameraLoc).x * sinAngle;
-
-		relativeLocAlignStart = relativeLocAlignStart / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
-
-		Vec2 relativeLocAlignEnd = Vec2();
-		relativeLocAlignEnd.x = (lineAlignEnd - cameraLoc).x * cosAngle + (lineAlignEnd - cameraLoc).y * sinAngle;
-		relativeLocAlignEnd.y = (lineAlignEnd - cameraLoc).y * cosAngle - (lineAlignEnd - cameraLoc).x * sinAngle;
-
-		relativeLocAlignEnd = relativeLocAlignEnd / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
-
-
-		gfx.DrawLine(Line(relativeLocAlignStart, relativeLocAlignEnd), relativeLocAlignStart, relativeLocAlignEnd, Colors::White);
-		gfx.DrawCircle((relativeLocAlignEnd), 5.0f / cameraZoom, Colors::White);
-
 		
 
-		// Draw Seek vector
+		for (int b = 0; b < worldObjects[currentViewedWorldObject].GetPhysicsInfo().behaviourInfos.size(); b++)
+		{
+			Color c = Color(20 + ((b + 1) * 40 * ((b + 1) % 8)) % 127, 20 + ((b + 1) * 45 * ((b + 1) % 9)) % 127, 20 + ((b + 1) * 75 * (((b + 1)) % 11)) % 127);
 
-		Vec2 lineSeekStart = Vec2() + cameraLoc;
-		Vec2 lineSeekEnd = worldObjects[0].GetPhysicsInfo().desiredSeek + cameraLoc;
+			Vec2 lineAlignStart = Vec2() + cameraLoc;
+			Vec2 lineAlignEnd = worldObjects[currentViewedWorldObject].GetPhysicsInfo().behaviourInfos[b].velocity + cameraLoc;
 
-		Vec2 relativeLocSeekStart = Vec2();
-		relativeLocSeekStart.x = (lineSeekStart - cameraLoc).x * cosAngle + (lineSeekStart - cameraLoc).y * sinAngle;
-		relativeLocSeekStart.y = (lineSeekStart - cameraLoc).y * cosAngle - (lineSeekStart - cameraLoc).x * sinAngle;
+			Vec2 relativeLocAlignStart = Vec2();
+			relativeLocAlignStart.x = (lineAlignStart - cameraLoc).x * cosAngle + (lineAlignStart - cameraLoc).y * sinAngle;
+			relativeLocAlignStart.y = (lineAlignStart - cameraLoc).y * cosAngle - (lineAlignStart - cameraLoc).x * sinAngle;
 
-		relativeLocSeekStart = relativeLocSeekStart / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
+			relativeLocAlignStart = relativeLocAlignStart / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
 
-		Vec2 relativeLocSeekEnd = Vec2();
-		relativeLocSeekEnd.x = (lineSeekEnd - cameraLoc).x * cosAngle + (lineSeekEnd - cameraLoc).y * sinAngle;
-		relativeLocSeekEnd.y = (lineSeekEnd - cameraLoc).y * cosAngle - (lineSeekEnd - cameraLoc).x * sinAngle;
+			Vec2 relativeLocAlignEnd = Vec2();
+			relativeLocAlignEnd.x = (lineAlignEnd - cameraLoc).x * cosAngle + (lineAlignEnd - cameraLoc).y * sinAngle;
+			relativeLocAlignEnd.y = (lineAlignEnd - cameraLoc).y * cosAngle - (lineAlignEnd - cameraLoc).x * sinAngle;
 
-		relativeLocSeekEnd = relativeLocSeekEnd / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
-
-
-		gfx.DrawLine(Line(relativeLocSeekStart, relativeLocSeekEnd), relativeLocSeekStart, relativeLocSeekEnd, Colors::Red);
-		gfx.DrawCircle((relativeLocSeekEnd), 5.0f / cameraZoom, Colors::Red);
-
-		
-
-		// Draw Flee vector
-
-		Vec2 lineFleeStart = Vec2() + cameraLoc;
-		Vec2 lineFleeEnd = worldObjects[0].GetPhysicsInfo().desiredFlee + cameraLoc;
-
-		Vec2 relativeLocFleeStart = Vec2();
-		relativeLocFleeStart.x = (lineFleeStart - cameraLoc).x * cosAngle + (lineFleeStart - cameraLoc).y * sinAngle;
-		relativeLocFleeStart.y = (lineFleeStart - cameraLoc).y * cosAngle - (lineFleeStart - cameraLoc).x * sinAngle;
-
-		relativeLocFleeStart = relativeLocFleeStart / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
-
-		Vec2 relativeLocFleeEnd = Vec2();
-		relativeLocFleeEnd.x = (lineFleeEnd - cameraLoc).x * cosAngle + (lineFleeEnd - cameraLoc).y * sinAngle;
-		relativeLocFleeEnd.y = (lineFleeEnd - cameraLoc).y * cosAngle - (lineFleeEnd - cameraLoc).x * sinAngle;
-
-		relativeLocFleeEnd = relativeLocFleeEnd / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
+			relativeLocAlignEnd = relativeLocAlignEnd / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
 
 
-		gfx.DrawLine(Line(relativeLocFleeStart, relativeLocFleeEnd), relativeLocFleeStart, relativeLocFleeEnd, Colors::Yellow);
-		gfx.DrawCircle((relativeLocFleeEnd), 5.0f / cameraZoom, Colors::Yellow);
+			gfx.DrawLine(Line(relativeLocAlignStart, relativeLocAlignEnd), relativeLocAlignStart, relativeLocAlignEnd, c);
+			gfx.DrawCircle((relativeLocAlignEnd), 5.0f / cameraZoom, c);
+
+			RetroContent::DrawString(gfx, worldObjects[currentViewedWorldObject].GetPhysicsInfo().behaviourInfos[b].name, Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 1 / 2) + 200.0f + 50.0f * (float)b), 3, c);
+		}
 
 
 
-		RetroContent::DrawString(gfx, "ALIGN", Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 3 / 5) + 200.0f), 3, Colors::White);
-		RetroContent::DrawString(gfx, "SEEK", Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 3 / 5) + 250.0f), 3, Colors::Red);
-		RetroContent::DrawString(gfx, "FLEE", Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 3 / 5) + 300.0f), 3, Colors::Yellow);
 	}
 	else
 	{
-		RetroContent::DrawString(gfx, "ALIGN", Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 3 / 5) + 200.0f), 3, Colors::Gray);
-		RetroContent::DrawString(gfx, "SEEK", Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 3 / 5) + 250.0f), 3, Colors::Gray);
-		RetroContent::DrawString(gfx, "FLEE", Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 3 / 5) + 300.0f), 3, Colors::Gray);
+		for (int b = 0; b < worldObjects[currentViewedWorldObject].GetPhysicsInfo().behaviourInfos.size(); b++)
+		{
+			RetroContent::DrawString(gfx, worldObjects[currentViewedWorldObject].GetPhysicsInfo().behaviourInfos[b].name, Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 1 / 2) + 200.0f + 50.0f * (float)b), 3, Colors::Gray);
+		}
+
 	}
 
 }
+
+
+
+
+
+
+//// Draw Seek vector
+//
+//Vec2 lineSeekStart = Vec2() + cameraLoc;
+//Vec2 lineSeekEnd = worldObjects[0].GetPhysicsInfo().desiredSeek + cameraLoc;
+//
+//Vec2 relativeLocSeekStart = Vec2();
+//relativeLocSeekStart.x = (lineSeekStart - cameraLoc).x * cosAngle + (lineSeekStart - cameraLoc).y * sinAngle;
+//relativeLocSeekStart.y = (lineSeekStart - cameraLoc).y * cosAngle - (lineSeekStart - cameraLoc).x * sinAngle;
+//
+//relativeLocSeekStart = relativeLocSeekStart / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
+//
+//Vec2 relativeLocSeekEnd = Vec2();
+//relativeLocSeekEnd.x = (lineSeekEnd - cameraLoc).x * cosAngle + (lineSeekEnd - cameraLoc).y * sinAngle;
+//relativeLocSeekEnd.y = (lineSeekEnd - cameraLoc).y * cosAngle - (lineSeekEnd - cameraLoc).x * sinAngle;
+//
+//relativeLocSeekEnd = relativeLocSeekEnd / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
+//
+//
+//gfx.DrawLine(Line(relativeLocSeekStart, relativeLocSeekEnd), relativeLocSeekStart, relativeLocSeekEnd, Colors::Red);
+//gfx.DrawCircle((relativeLocSeekEnd), 5.0f / cameraZoom, Colors::Red);
+//
+//
+//
+//// Draw Flee vector
+//
+//Vec2 lineFleeStart = Vec2() + cameraLoc;
+//Vec2 lineFleeEnd = worldObjects[0].GetPhysicsInfo().desiredFlee + cameraLoc;
+//
+//Vec2 relativeLocFleeStart = Vec2();
+//relativeLocFleeStart.x = (lineFleeStart - cameraLoc).x * cosAngle + (lineFleeStart - cameraLoc).y * sinAngle;
+//relativeLocFleeStart.y = (lineFleeStart - cameraLoc).y * cosAngle - (lineFleeStart - cameraLoc).x * sinAngle;
+//
+//relativeLocFleeStart = relativeLocFleeStart / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
+//
+//Vec2 relativeLocFleeEnd = Vec2();
+//relativeLocFleeEnd.x = (lineFleeEnd - cameraLoc).x * cosAngle + (lineFleeEnd - cameraLoc).y * sinAngle;
+//relativeLocFleeEnd.y = (lineFleeEnd - cameraLoc).y * cosAngle - (lineFleeEnd - cameraLoc).x * sinAngle;
+//
+//relativeLocFleeEnd = relativeLocFleeEnd / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
+//
+//
+//gfx.DrawLine(Line(relativeLocFleeStart, relativeLocFleeEnd), relativeLocFleeStart, relativeLocFleeEnd, Colors::Yellow);
+//gfx.DrawCircle((relativeLocFleeEnd), 5.0f / cameraZoom, Colors::Yellow);
+
+
+
+
+//RetroContent::DrawString(gfx, "SEEK", Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 3 / 5) + 250.0f), 3, Colors::Red);
+//RetroContent::DrawString(gfx, "FLEE", Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 3 / 5) + 300.0f), 3, Colors::Yellow);
+
+		//RetroContent::DrawString(gfx, "SEEK", Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 3 / 5) + 250.0f), 3, Colors::Gray);
+		//RetroContent::DrawString(gfx, "FLEE", Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 3 / 5) + 300.0f), 3, Colors::Gray);

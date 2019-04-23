@@ -67,6 +67,14 @@ private:
 	bool f3IsPressed = false;
 	bool f3IsActive = false;
 
+	bool crtlIsPressed = false;
+	bool crtlIsActive = false;
+
 	bool rightIsPressed = false;
 	bool rightIsActive = false;
+
+	bool leftIsPressed = false;
+	bool leftIsActive = false;
+
+	int currentViewedWorldObject = 0;
 };

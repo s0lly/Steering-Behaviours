@@ -16,11 +16,24 @@ enum BEHAVIOUR_TYPE
 	SEEK,
 	FLEE,
 	ALIGN,
+	COHESION,
 	//ARRIVE,
 	//PURSUE,
 	//EVADE,
 	//WANDER,
 	NUM_BEHAVIOURS
+};
+
+struct BehaviourInfo
+{
+	std::string name;
+	BEHAVIOUR_TYPE type;
+	BRAIN_TYPE targetBrainType;
+	float addTargetsInDistSqrd;
+	float intensity;
+	int maxTargets;
+	int currentTargets;
+	Vec2 velocity;
 };
 
 struct PhysicsInfo
@@ -39,9 +52,7 @@ struct PhysicsInfo
 		relativeLoc(in_physicsInfo.relativeLoc),
 		isInEyesight(in_physicsInfo.isInEyesight),
 		desiredVelocity(in_physicsInfo.desiredVelocity),
-		desiredAlign(in_physicsInfo.desiredAlign),
-		desiredSeek(in_physicsInfo.desiredSeek),
-		desiredFlee(in_physicsInfo.desiredFlee)
+		behaviourInfos(in_physicsInfo.behaviourInfos)
 	{
 	}
 
@@ -88,7 +99,8 @@ struct PhysicsInfo
 			relativeLoc.x = (loc - locToCompare).x * cosAngle - (loc - locToCompare).y * sinAngle;
 			relativeLoc.y = (loc - locToCompare).y * cosAngle + (loc - locToCompare).x * sinAngle;
 
-			isInEyesight = ((relativeLoc.y > 0));
+			//isInEyesight = ((relativeLoc.y > 0)); // 180degree FOV 
+			isInEyesight = true; // 360degree FOV
 		}
 		else
 		{
@@ -105,7 +117,5 @@ struct PhysicsInfo
 	Vec2 relativeLoc;
 	bool isInEyesight;
 	Vec2 desiredVelocity;
-	Vec2 desiredAlign;
-	Vec2 desiredSeek;
-	Vec2 desiredFlee;
+	std::vector<BehaviourInfo> behaviourInfos;
 };

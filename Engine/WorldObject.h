@@ -35,6 +35,124 @@ public:
 		physicsInfo = brainPtr->DetermineDesiredVelocity(worldObjectPhysicsInfos);
 	}
 
+
+	void Move(float dt)
+	{
+		physicsInfo.loc = physicsInfo.loc + physicsInfo.velocity * dt;
+	}
+
+	void Update(float dt)
+	{
+
+
+		physicsInfo.desiredVelocity = (physicsInfo.desiredVelocity).Normalize() * maxSpeed;
+
+		ApplyForce(physicsInfo.desiredVelocity - physicsInfo.velocity, dt);
+
+		Move(dt);
+	}
+
+	void ApplyForce(Vec2 newForce, float dt)
+	{
+		physicsInfo.velocity = physicsInfo.velocity + (newForce * dt) / mass;
+	}
+
+	PhysicsInfo GetPhysicsInfo()
+	{
+		return physicsInfo;
+	}
+
+	float GetMass()
+	{
+		return mass;
+	}
+
+	float GetMaxSpeed()
+	{
+		return maxSpeed;
+	}
+
+	Color GetColor()
+	{
+		return color;
+	}
+
+	float GetRadius()
+	{
+		return radius;
+	}
+
+
+private:
+
+	PhysicsInfo physicsInfo;
+	float mass;
+	float maxSpeed;
+	float radius = 5.0f;
+	Color color = Colors::Red;
+	Brain* brainPtr = nullptr;
+
+	
+};
+
+
+
+
+//Vec2 seperationVelocity;
+//Vec2 alignmentVelocity;
+//Vec2 cohesionVelocity;
+//Vec2 neighbourAverageLoc;
+//int numSeperationTargets;
+//int numAlignmentTargets;
+//int numCohesionTargets;
+
+
+//float SEPERATION_MULTIPLIER = (float)numSeperationTargets / 2.0f;
+//float COHESION_MULTIPLIER = (float)numCohesionTargets / 4.0f;
+//float ALIGNMENT_MULTIPLIER = (float)numAlignmentTargets * 8.0f;
+//float RANDOMNESS_MULTIPLIER = 1.0f;
+//
+//float MAX_FORCE = 1.0f;
+//
+//
+//// Cohesion
+//if (numCohesionTargets > 0)
+//{
+//	neighbourAverageLoc = neighbourAverageLoc / numCohesionTargets;
+//	cohesionVelocity = (neighbourAverageLoc - loc);
+//}
+//
+//
+//Vec2 randomnessVelocity = Vec2((float)(rand() % 101 - 50), (float)(rand() % 101 - 50));
+//
+//desiredVelocity = seperationVelocity.Normalize() * SEPERATION_MULTIPLIER;
+//
+//if (true)
+//{
+//	desiredVelocity = desiredVelocity + cohesionVelocity.Normalize() * COHESION_MULTIPLIER;
+//}
+//
+//if (true)
+//{
+//	desiredVelocity = desiredVelocity + alignmentVelocity.Normalize() * ALIGNMENT_MULTIPLIER;
+//}
+//
+//if (true)
+//{
+//	desiredVelocity = desiredVelocity + randomnessVelocity.Normalize() * RANDOMNESS_MULTIPLIER;;
+//}
+
+//if (desiredVelocity.GetMagnitude() < 0.001f)
+//{
+//	desiredVelocity = physicsInfo.velocity;
+//}
+//else
+//{
+//	
+//}
+
+
+
 	//void CalculateNeighbourInfo(WorldObject &targetObject)
 	//{
 	//	Vec2 toTarget = targetObject.GetLoc() - GetLoc();
@@ -74,93 +192,6 @@ public:
 	//	}
 	//}
 
-	void Move(float dt)
-	{
-		physicsInfo.loc = physicsInfo.loc + physicsInfo.velocity * dt;
-	}
-
-	void Update(float dt)
-	{
-		//float SEPERATION_MULTIPLIER = (float)numSeperationTargets / 2.0f;
-		//float COHESION_MULTIPLIER = (float)numCohesionTargets / 4.0f;
-		//float ALIGNMENT_MULTIPLIER = (float)numAlignmentTargets * 8.0f;
-		//float RANDOMNESS_MULTIPLIER = 1.0f;
-		//
-		//float MAX_FORCE = 1.0f;
-		//
-		//
-		//// Cohesion
-		//if (numCohesionTargets > 0)
-		//{
-		//	neighbourAverageLoc = neighbourAverageLoc / numCohesionTargets;
-		//	cohesionVelocity = (neighbourAverageLoc - loc);
-		//}
-		//
-		//
-		//Vec2 randomnessVelocity = Vec2((float)(rand() % 101 - 50), (float)(rand() % 101 - 50));
-		//
-		//desiredVelocity = seperationVelocity.Normalize() * SEPERATION_MULTIPLIER;
-		//
-		//if (true)
-		//{
-		//	desiredVelocity = desiredVelocity + cohesionVelocity.Normalize() * COHESION_MULTIPLIER;
-		//}
-		//
-		//if (true)
-		//{
-		//	desiredVelocity = desiredVelocity + alignmentVelocity.Normalize() * ALIGNMENT_MULTIPLIER;
-		//}
-		//
-		//if (true)
-		//{
-		//	desiredVelocity = desiredVelocity + randomnessVelocity.Normalize() * RANDOMNESS_MULTIPLIER;;
-		//}
-
-		//if (desiredVelocity.GetMagnitude() < 0.001f)
-		//{
-		//	desiredVelocity = physicsInfo.velocity;
-		//}
-		//else
-		//{
-		//	
-		//}
-
-		physicsInfo.desiredVelocity = (physicsInfo.desiredVelocity).Normalize() * maxSpeed;
-
-		ApplyForce(physicsInfo.desiredVelocity - physicsInfo.velocity, dt);
-
-		Move(dt);
-	}
-
-	void ApplyForce(Vec2 newForce, float dt)
-	{
-		physicsInfo.velocity = physicsInfo.velocity + (newForce * dt) / mass;
-	}
-
-	PhysicsInfo GetPhysicsInfo()
-	{
-		return physicsInfo;
-	}
-
-	float GetMass()
-	{
-		return mass;
-	}
-
-	float GetMaxSpeed()
-	{
-		return maxSpeed;
-	}
-
-	Color GetColor()
-	{
-		return color;
-	}
-
-	float GetRadius()
-	{
-		return radius;
-	}
 
 	//void ResetNeighbourInfo()
 	//{
@@ -172,22 +203,3 @@ public:
 	//	numCohesionTargets = 0;
 	//	numAlignmentTargets = 0;
 	//}
-
-
-private:
-
-	PhysicsInfo physicsInfo;
-	float mass;
-	float maxSpeed;
-	float radius = 5.0f;
-	Color color = Colors::Red;
-	Brain* brainPtr = nullptr;
-	//Vec2 seperationVelocity;
-	//Vec2 alignmentVelocity;
-	//Vec2 cohesionVelocity;
-	//Vec2 neighbourAverageLoc;
-	//int numSeperationTargets;
-	//int numAlignmentTargets;
-	//int numCohesionTargets;
-	
-};

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "PhysicsInfo.h"
+#include <string>
 
 class Behaviour
 {
@@ -112,6 +113,38 @@ public:
 
 		if (targets.size() > 0)
 		{
+			Vec2 averageLoc = FindWeightedAverageLocOfTargetsByDistance();
+
+			resultantVector = (averageLoc - self.loc);
+		}
+
+		return resultantVector;
+	}
+
+
+private:
+
+
+};
+
+class BehaviourCohesion : public Behaviour
+{
+public:
+	BehaviourCohesion(PhysicsInfo in_self)
+		:
+		Behaviour(in_self)
+	{
+		behaviourType = BEHAVIOUR_TYPE::SEEK;
+	}
+
+
+
+	Vec2 PerformLogicAndGetVelocityVector()
+	{
+		resultantVector = Vec2();
+
+		if (targets.size() > 0)
+		{
 			Vec2 averageLoc = FindAverageLocOfTargets();
 
 			resultantVector = (averageLoc - self.loc);
@@ -125,6 +158,7 @@ private:
 
 
 };
+
 
 class BehaviourFlee : public Behaviour
 {
@@ -205,5 +239,11 @@ static Behaviour* CreateBehaviour(PhysicsInfo self, BEHAVIOUR_TYPE type)
 	{
 		return new BehaviourAlign(self);
 	}break;
+	case BEHAVIOUR_TYPE::COHESION:
+	{
+		return new BehaviourSeek(self);
+	}break;
 	}
 }
+
+
