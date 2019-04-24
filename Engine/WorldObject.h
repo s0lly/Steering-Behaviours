@@ -84,7 +84,7 @@ public:
 	}
 
 
-private:
+//private:
 
 	PhysicsInfo *physicsInfoPtr;
 	float mass;

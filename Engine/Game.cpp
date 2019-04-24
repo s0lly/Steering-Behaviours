@@ -26,7 +26,7 @@ Game::Game( MainWindow& wnd )
 	wnd( wnd ),
 	gfx( wnd )
 {
-	int maxObjects = 3;
+	int maxObjects = 100;
 
 	for (int i = 0; i < maxObjects; i++)
 	{
@@ -123,6 +123,19 @@ void Game::ProcessInput()
 	else
 	{
 		f3IsPressed = false;
+	}
+
+	if (wnd.kbd.KeyIsPressed(VK_F4))
+	{
+		if (!f4IsPressed)
+		{
+			f4IsPressed = true;
+			f4IsActive = !f4IsActive;
+		}
+	}
+	else
+	{
+		f4IsPressed = false;
 	}
 
 	if (wnd.kbd.KeyIsPressed(VK_CONTROL))
@@ -450,7 +463,7 @@ void Game::ComposeFrame()
 
 	if (f3IsActive)
 	{
-		// Draw desired velocity vector
+		// Draw steering force
 
 		Vec2 line2Start = Vec2() + cameraLoc;
 		Vec2 line2End = worldObjects[currentViewedWorldObject].GetPhysicsInfo()->totalSteeringVelocity + cameraLoc;
@@ -478,49 +491,49 @@ void Game::ComposeFrame()
 		RetroContent::DrawString(gfx, "STEERING", Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 1 / 9) + 200.0f), 3, Colors::Gray);
 	}
 
-	//if (f3IsActive)
-	//{
-	//
-	//
-	//	
-	//
-	//	for (int b = 0; b < worldObjects[currentViewedWorldObject].GetPhysicsInfo().behaviourInfos.size(); b++)
-	//	{
-	//		Color c = Color(20 + ((b + 1) * 40 * ((b + 1) % 8)) % 127, 20 + ((b + 1) * 45 * ((b + 1) % 9)) % 127, 20 + ((b + 1) * 75 * (((b + 1)) % 11)) % 127);
-	//
-	//		Vec2 lineAlignStart = Vec2() + cameraLoc;
-	//		Vec2 lineAlignEnd = worldObjects[currentViewedWorldObject].GetPhysicsInfo().behaviourInfos[b].velocity + cameraLoc;
-	//
-	//		Vec2 relativeLocAlignStart = Vec2();
-	//		relativeLocAlignStart.x = (lineAlignStart - cameraLoc).x * cosAngle + (lineAlignStart - cameraLoc).y * sinAngle;
-	//		relativeLocAlignStart.y = (lineAlignStart - cameraLoc).y * cosAngle - (lineAlignStart - cameraLoc).x * sinAngle;
-	//
-	//		relativeLocAlignStart = relativeLocAlignStart / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
-	//
-	//		Vec2 relativeLocAlignEnd = Vec2();
-	//		relativeLocAlignEnd.x = (lineAlignEnd - cameraLoc).x * cosAngle + (lineAlignEnd - cameraLoc).y * sinAngle;
-	//		relativeLocAlignEnd.y = (lineAlignEnd - cameraLoc).y * cosAngle - (lineAlignEnd - cameraLoc).x * sinAngle;
-	//
-	//		relativeLocAlignEnd = relativeLocAlignEnd / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
-	//
-	//
-	//		gfx.DrawLine(Line(relativeLocAlignStart, relativeLocAlignEnd), relativeLocAlignStart, relativeLocAlignEnd, c);
-	//		gfx.DrawCircle((relativeLocAlignEnd), 5.0f / cameraZoom, c);
-	//
-	//		RetroContent::DrawString(gfx, worldObjects[currentViewedWorldObject].GetPhysicsInfo().behaviourInfos[b].name, Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 1 / 2) + 200.0f + 50.0f * (float)b), 3, c);
-	//	}
-	//
-	//
-	//
-	//}
-	//else
-	//{
-	//	for (int b = 0; b < worldObjects[currentViewedWorldObject].GetPhysicsInfo().behaviourInfos.size(); b++)
-	//	{
-	//		RetroContent::DrawString(gfx, worldObjects[currentViewedWorldObject].GetPhysicsInfo().behaviourInfos[b].name, Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 1 / 2) + 200.0f + 50.0f * (float)b), 3, Colors::Gray);
-	//	}
-	//
-	//}
+	if (f4IsActive)
+	{
+	
+	  // Draw component steering forces
+		
+	
+		for (int b = 0; b < worldObjects[currentViewedWorldObject].brainPtr->behaviours.size(); b++)
+		{
+			Color c = Color(255, 60 * b * 2, 255 - 40 * b * 2);
+	
+			Vec2 lineAlignStart = Vec2() + cameraLoc;
+			Vec2 lineAlignEnd = worldObjects[currentViewedWorldObject].brainPtr->behaviours[b]->info.steeringVelocity + cameraLoc;
+	
+			Vec2 relativeLocAlignStart = Vec2();
+			relativeLocAlignStart.x = (lineAlignStart - cameraLoc).x * cosAngle + (lineAlignStart - cameraLoc).y * sinAngle;
+			relativeLocAlignStart.y = (lineAlignStart - cameraLoc).y * cosAngle - (lineAlignStart - cameraLoc).x * sinAngle;
+	
+			relativeLocAlignStart = relativeLocAlignStart / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
+	
+			Vec2 relativeLocAlignEnd = Vec2();
+			relativeLocAlignEnd.x = (lineAlignEnd - cameraLoc).x * cosAngle + (lineAlignEnd - cameraLoc).y * sinAngle;
+			relativeLocAlignEnd.y = (lineAlignEnd - cameraLoc).y * cosAngle - (lineAlignEnd - cameraLoc).x * sinAngle;
+	
+			relativeLocAlignEnd = relativeLocAlignEnd / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
+	
+	
+			gfx.DrawLine(Line(relativeLocAlignStart, relativeLocAlignEnd), relativeLocAlignStart, relativeLocAlignEnd, c);
+			gfx.DrawCircle((relativeLocAlignEnd), 5.0f / cameraZoom, c);
+	
+			RetroContent::DrawString(gfx, worldObjects[currentViewedWorldObject].brainPtr->behaviours[b]->info.name, Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 1 / 9) + 300.0f + 50.0f * (float)b), 3, c);
+		}
+	
+	
+	
+	}
+	else
+	{
+		for (int b = 0; b < worldObjects[currentViewedWorldObject].brainPtr->behaviours.size(); b++)
+		{
+			RetroContent::DrawString(gfx, worldObjects[currentViewedWorldObject].brainPtr->behaviours[b]->info.name, Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 1 / 9) + 300.0f + 50.0f * (float)b), 3, Colors::Gray);
+		}
+	
+	}
 
 }
 

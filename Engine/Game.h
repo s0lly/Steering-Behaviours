@@ -67,6 +67,9 @@ private:
 	bool f3IsPressed = false;
 	bool f3IsActive = false;
 
+	bool f4IsPressed = false;
+	bool f4IsActive = false;
+
 	bool crtlIsPressed = false;
 	bool crtlIsActive = false;
 

@@ -16,8 +16,9 @@ enum BEHAVIOUR_TYPE
 	SEEK,
 	FLEE,
 	ALIGN,
-	COHESION,
+	WANDER,
 	SEPARATION,
+	SLOW_DOWN,
 	//ARRIVE,
 	//PURSUE,
 	//EVADE,
@@ -35,7 +36,6 @@ struct BehaviourInfo
 	float intensity;
 	int maxTargets;
 	int currentTargets;
-	Vec2 desiredVelocity;
 	Vec2 steeringVelocity;
 };
 
@@ -105,8 +105,10 @@ struct PhysicsInfo
 			relativeLoc.x = (loc - locToCompare).x * cosAngle - (loc - locToCompare).y * sinAngle;
 			relativeLoc.y = (loc - locToCompare).y * cosAngle + (loc - locToCompare).x * sinAngle;
 
-			//isInEyesight = ((relativeLoc.y > 0)); // 180degree FOV 
-			isInEyesight = true; // 360degree FOV
+			//isInEyesight = ((relativeLoc.y > 0) && (abs(relativeLoc.x) < relativeLoc.y)); // 90degree FOV 
+			isInEyesight = ((relativeLoc.y > 0)); // 180degree FOV 
+			isInEyesight = ((relativeLoc.y > 0) || ((relativeLoc.y <= 0) && ((abs(relativeLoc.x) > abs(relativeLoc.y))))); // 270degree FOV 
+			//isInEyesight = true; // 360degree FOV
 		}
 		else
 		{
