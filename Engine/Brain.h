@@ -10,139 +10,119 @@
 class Brain
 {
 public:
-	Brain(PhysicsInfo in_self)
+	Brain(PhysicsInfo *in_selfPtr)
 		:
-		self(in_self)
+		selfPtr(in_selfPtr)
 	{
-		decisionMade = false;
 		randomness = (float)(rand() % 100);
 	}
 
 
-	void Refresh(PhysicsInfo in_self)
+	void Refresh()
 	{
-		self = in_self;
-
-		if (self.behaviourInfos.size() == 0)
-		{
-			for (int i = 0; i < behaviourInfos.size(); i++)
-			{
-				self.behaviourInfos.push_back(behaviourInfos[i]);
-			}
-		}
-		
-
+		// Reset all behaviours
 		for (int i = 0; i < behaviours.size(); i++)
 		{
-			delete behaviours[i];
-			behaviourInfos[i].velocity = Vec2();
-			behaviourInfos[i].currentTargets = 0;
+			behaviours[i]->info.desiredVelocity = Vec2();
+			behaviours[i]->info.steeringVelocity = Vec2();
+			behaviours[i]->info.currentTargets = 0;
 		}
-		behaviours.clear();
 
-		decisionMade = false;
-
-		FormBehaviours();
+		// Reset all total velocity infos
+		selfPtr->totalDesiredVelocity = Vec2();
+		selfPtr->totalSteeringVelocity = Vec2();
 	}
 
-	PhysicsInfo DetermineDesiredVelocity(std::vector<PhysicsInfo> worldObjectPhysicsInfos)
+	void DetermineVelocities(std::vector<PhysicsInfo*> worldObjectPhysicsInfos)
 	{
+		// Optimise required!! Sort on something else?? E.g. ID vector or similar. Or Pointers????? FIX!!!!
 		for (int j = 0; j < worldObjectPhysicsInfos.size(); j++)
 		{
-			worldObjectPhysicsInfos[j].SetRelativeInfo(self.loc, self.velocity);
+			worldObjectPhysicsInfos[j]->SetRelativeInfo(selfPtr->loc, selfPtr->velocity);
 		}
 
-		std::sort(worldObjectPhysicsInfos.begin(), worldObjectPhysicsInfos.end());
+		//std::sort(worldObjectPhysicsInfos.begin(), worldObjectPhysicsInfos.end());
 
-		self.desiredVelocity = Vec2();
-
-		for (int j = 0; j < worldObjectPhysicsInfos.size() && !decisionMade; j++)
+		for (int j = 0; j < worldObjectPhysicsInfos.size(); j++)
 		{
-			if (self.ID != worldObjectPhysicsInfos[j].ID && worldObjectPhysicsInfos[j].isInEyesight)
+			if (selfPtr->ID != worldObjectPhysicsInfos[j]->ID && worldObjectPhysicsInfos[j]->isInEyesight)
 			{
-				for (int b = 0; b < behaviourInfos.size(); b++)
+				for (int b = 0; b < behaviours.size(); b++)
 				{
-					if (worldObjectPhysicsInfos[j].relativeDistSqrd < behaviourInfos[b].addTargetsInDistSqrd &&
-						worldObjectPhysicsInfos[j].brainType == behaviourInfos[b].targetBrainType &&
-						behaviourInfos[b].currentTargets < behaviourInfos[b].maxTargets)
+					if (worldObjectPhysicsInfos[j]->relativeDistSqrd > behaviours[b]->info.addTargetsInDistSqrdMin &&
+						worldObjectPhysicsInfos[j]->relativeDistSqrd < behaviours[b]->info.addTargetsInDistSqrdMax &&
+						worldObjectPhysicsInfos[j]->brainType == behaviours[b]->info.targetBrainType &&
+						behaviours[b]->info.currentTargets < behaviours[b]->info.maxTargets)
 					{
 						behaviours[b]->AddTarget(worldObjectPhysicsInfos[j]);
-						behaviourInfos[b].currentTargets++;
+						behaviours[b]->info.currentTargets++;
 					}
 				}
 			}
 		}
 
-		for (int b = 0; b < behaviourInfos.size(); b++)
+		for (int b = 0; b < behaviours.size(); b++)
 		{
-			behaviourInfos[b].velocity = Vec2();
+			behaviours[b]->PerformLogicAndSetVelocityVectors();
+
+			// Think about this!!
+
+			selfPtr->totalDesiredVelocity = selfPtr->totalDesiredVelocity + behaviours[b]->info.desiredVelocity * behaviours[b]->info.intensity;
+			
+			selfPtr->totalSteeringVelocity = selfPtr->totalSteeringVelocity + behaviours[b]->info.steeringVelocity * behaviours[b]->info.intensity;
+			
 		}
 
-		for (int b = 0; b < behaviourInfos.size(); b++)
+		if (selfPtr->totalDesiredVelocity.GetMagnitude() > selfPtr->maxSpeed)
 		{
-			for (int t = 0; t < NUM_BEHAVIOURS; t++)
-			{
-				if (behaviourInfos[b].type == (BEHAVIOUR_TYPE)t)
-				{
-					behaviourInfos[b].velocity = behaviours[b]->PerformLogicAndGetVelocityVector() * behaviourInfos[b].intensity;
-					self.desiredVelocity = self.desiredVelocity + behaviourInfos[b].velocity;
-					self.behaviourInfos[b].velocity = behaviourInfos[b].velocity;
-					break;
-				}
-			}
+			selfPtr->totalDesiredVelocity = selfPtr->totalDesiredVelocity.Normalize() * selfPtr->maxSpeed;
 		}
-
+		if (selfPtr->totalSteeringVelocity.GetMagnitude() > selfPtr->maxSpeed)
+		{
+			selfPtr->totalSteeringVelocity = selfPtr->totalSteeringVelocity.Normalize() * selfPtr->maxSpeed;
+		}
 
 
 		// Wander
 
-		randomness += (float)(rand() % 100) / 200.0f;
+		//randomness += (float)(rand() % 100) / 200.0f;
+		//
+		//float relAngle = 0.0f;
+		//
+		//if (self.desiredVelocity.GetMagnitude() < 0.1f)
+		//{
+		//	relAngle = (float)(rand() % 6282) / 1000.0f - 3.141f;
+		//	if (self.velocity.GetMagnitude() < 5.0f)
+		//	{
+		//		float cosAngle = cos(relAngle);
+		//		float sinAngle = sin(relAngle);
+		//		self.desiredVelocity.x = 1.0f * sinAngle;
+		//		self.desiredVelocity.y = 1.0f * cosAngle;
+		//	}
+		//}
+		//else
+		//{
+		//	relAngle = acosf(self.desiredVelocity.y / self.desiredVelocity.GetMagnitude());
+		//
+		//	if (self.desiredVelocity.x < 0.0f)
+		//	{
+		//		relAngle = -relAngle;
+		//	}
+		//}
+		//
+		//float cosAngle = cos(relAngle);
+		//float sinAngle = sin(relAngle);
+		//
+		//float randSideways = (float)(sin(randomness)) / 1.0f;
+		//
+		//Vec2 sidewaysLoc = Vec2(randSideways, 1.0f);
+		//Vec2 relativeLoc = Vec2();
+		//
+		//relativeLoc.x = (sidewaysLoc).x * cosAngle + (sidewaysLoc).y * sinAngle;
+		//relativeLoc.y = (sidewaysLoc).y * cosAngle - (sidewaysLoc).x * sinAngle;
+		//
+		//self.desiredVelocity = self.desiredVelocity + (relativeLoc.Normalize()) * 100.0f;
 
-		float relAngle = 0.0f;
-
-		if (self.desiredVelocity.GetMagnitude() < 0.1f)
-		{
-			relAngle = (float)(rand() % 6282) / 1000.0f - 3.141f;
-			if (self.velocity.GetMagnitude() < 5.0f)
-			{
-				float cosAngle = cos(relAngle);
-				float sinAngle = sin(relAngle);
-				self.desiredVelocity.x = 1.0f * sinAngle;
-				self.desiredVelocity.y = 1.0f * cosAngle;
-			}
-		}
-		else
-		{
-			relAngle = acosf(self.desiredVelocity.y / self.desiredVelocity.GetMagnitude());
-
-			if (self.desiredVelocity.x < 0.0f)
-			{
-				relAngle = -relAngle;
-			}
-		}
-
-		float cosAngle = cos(relAngle);
-		float sinAngle = sin(relAngle);
-
-		float randSideways = (float)(sin(randomness)) / 1.0f;
-
-		Vec2 sidewaysLoc = Vec2(randSideways, 1.0f);
-		Vec2 relativeLoc = Vec2();
-
-		relativeLoc.x = (sidewaysLoc).x * cosAngle + (sidewaysLoc).y * sinAngle;
-		relativeLoc.y = (sidewaysLoc).y * cosAngle - (sidewaysLoc).x * sinAngle;
-
-		self.desiredVelocity = self.desiredVelocity + (relativeLoc.Normalize()) * 100.0f;
-
-		return self;
-	}
-
-	void FormBehaviours()
-	{
-		for (int i = 0; i < behaviourInfos.size(); i++)
-		{
-			behaviours.push_back(CreateBehaviour(self, (BEHAVIOUR_TYPE)behaviourInfos[i].type));
-		}
 	}
 	
 
@@ -150,27 +130,34 @@ public:
 	
 
 protected:
-	PhysicsInfo self;
+	PhysicsInfo *selfPtr;
 	std::vector<Behaviour*> behaviours;
-	bool decisionMade;
 	float randomness;
-	std::vector<BehaviourInfo> behaviourInfos;
+	//std::vector<BehaviourInfo> behaviourInfos;
 };
 
 
+
+
+
+// REDO THESE CLASSES SO THAT THEY ARE JUST ALL IN BRAIN WITH FACTORY GENERATOR!!!!
 
 class SeekerBrain : public Brain
 {
 public:
 
-	SeekerBrain(PhysicsInfo in_self)
+	SeekerBrain(PhysicsInfo *in_selfPtr)
 		:
-		Brain(in_self)
+		Brain(in_selfPtr)
 	{
-		decisionMade = false;
+		behaviours.push_back(new BehaviourSeek(in_selfPtr, { "SEEK GROUP FISH", SEEK, BRAIN_TYPE::SCARED, 0.0f, 60000.0f * 60000.0f, 1.0f, 1 }));
+		//behaviours.push_back(new BehaviourSeek(in_selfPtr, { "SEEK SINGLE FISH", SEEK, BRAIN_TYPE::SCARED, 0.0f, 500.0f * 500.0f, 5.0f, 1 }));
+		
+		
+		//behaviourInfos.push_back({ "SEEK GROUP FISH", SEEK, BRAIN_TYPE::SCARED, 0.0f, 60000.0f * 60000.0f, 1.0f, 10 });
+		//behaviourInfos.push_back({ "SEEK SINGLE FISH", SEEK, BRAIN_TYPE::SCARED, 0.0f, 500.0f * 500.0f, 5.0f, 1 });
 
-		behaviourInfos.push_back({ "SEEK FISH", SEEK, BRAIN_TYPE::SCARED, 60000.0f * 60000.0f, 2.0f, 9999 });
-		behaviourInfos.push_back({ "AVOID SHARKS", FLEE, BRAIN_TYPE::SEEKER, 1000.0f * 1000.0f, 0.1f, 9999 });
+		//behaviourInfos.push_back({ "AVOID SHARKS", FLEE, BRAIN_TYPE::SEEKER, 0.0f, 1000.0f * 1000.0f, 0.1f, 9999 });
 	}
 
 };
@@ -181,16 +168,18 @@ class ScaredBrain : public Brain
 {
 public:
 
-	ScaredBrain(PhysicsInfo in_self)
+	ScaredBrain(PhysicsInfo *in_selfPtr)
 		:
-		Brain(in_self)
+		Brain(in_selfPtr)
 	{
-		decisionMade = false;
 
-		behaviourInfos.push_back({ "COHESION FISH", COHESION, BRAIN_TYPE::SCARED, 20000.0f * 20000.0f, 3.0f, 9999 });
-		behaviourInfos.push_back({ "AVOID FISH", FLEE, BRAIN_TYPE::SCARED, 50.0f * 50.0f, 4.0f, 9999 });
-		behaviourInfos.push_back({ "ALIGN TO FISH", ALIGN, BRAIN_TYPE::SCARED, 100.0f * 100.0f, 0.05f, 9999 });
-		behaviourInfos.push_back({ "FLEE SHARK", FLEE, BRAIN_TYPE::SEEKER, 400.0f * 400.0f, 100.0f, 9999 });
+		//behaviourInfos.push_back({ "COHESION FISH", COHESION, BRAIN_TYPE::SCARED, 0.0f, 20000.0f * 20000.0f, 3.0f, 9999 });
+		//behaviourInfos.push_back({ "AVOID FISH", FLEE, BRAIN_TYPE::SCARED, 0.0f, 50.0f * 50.0f, 4.0f, 9999 });
+		//behaviourInfos.push_back({ "ALIGN TO FISH", ALIGN, BRAIN_TYPE::SCARED, 0.0f, 100.0f * 100.0f, 0.05f, 9999 });
+		
+		//behaviours.push_back(new BehaviourSeek(in_selfPtr, {"SEEK FAR FISH", SEEK, BRAIN_TYPE::SCARED, 0.0f, 60000.0f * 60000.0f, 1.0f, 9999 }));
+		behaviours.push_back(new BehaviourFlee(in_selfPtr, { "AVOID NEAR FISH", FLEE, BRAIN_TYPE::SCARED, 0.0f, 100.0f * 100.0f, 1.0f, 9999 }));
+		//behaviours.push_back(new BehaviourFlee(in_selfPtr, { "FLEE SHARK", FLEE, BRAIN_TYPE::SEEKER, 0.0f, 400.0f * 400.0f, 10.0f, 1 }));
 	}
 
 

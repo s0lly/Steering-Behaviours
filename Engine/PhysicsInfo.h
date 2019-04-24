@@ -17,6 +17,7 @@ enum BEHAVIOUR_TYPE
 	FLEE,
 	ALIGN,
 	COHESION,
+	SEPARATION,
 	//ARRIVE,
 	//PURSUE,
 	//EVADE,
@@ -29,11 +30,13 @@ struct BehaviourInfo
 	std::string name;
 	BEHAVIOUR_TYPE type;
 	BRAIN_TYPE targetBrainType;
-	float addTargetsInDistSqrd;
+	float addTargetsInDistSqrdMin; // keep??
+	float addTargetsInDistSqrdMax;
 	float intensity;
 	int maxTargets;
 	int currentTargets;
-	Vec2 velocity;
+	Vec2 desiredVelocity;
+	Vec2 steeringVelocity;
 };
 
 struct PhysicsInfo
@@ -51,17 +54,19 @@ struct PhysicsInfo
 		relativeDistSqrd(in_physicsInfo.relativeDistSqrd),
 		relativeLoc(in_physicsInfo.relativeLoc),
 		isInEyesight(in_physicsInfo.isInEyesight),
-		desiredVelocity(in_physicsInfo.desiredVelocity),
-		behaviourInfos(in_physicsInfo.behaviourInfos)
+		totalDesiredVelocity(in_physicsInfo.totalDesiredVelocity),
+		totalSteeringVelocity(in_physicsInfo.totalSteeringVelocity),
+		maxSpeed(in_physicsInfo.maxSpeed)
 	{
 	}
 
-	PhysicsInfo(BRAIN_TYPE in_brainType, Vec2 in_loc, Vec2 in_velocity, int in_ID)
+	PhysicsInfo(BRAIN_TYPE in_brainType, Vec2 in_loc, Vec2 in_velocity, int in_ID, float in_maxSpeed)
 		:
 		brainType(in_brainType),
 		loc(in_loc),
 		velocity(in_velocity),
-		ID(in_ID)
+		ID(in_ID),
+		maxSpeed(in_maxSpeed)
 	{
 	}
 
@@ -79,6 +84,7 @@ struct PhysicsInfo
 			if (viewerVelocity.GetMagnitude() < 1.0f)
 			{
 				angle = (float)(rand() % 6282) / 1000.0f - 3.141f;
+				//angle = 0.0f;
 			}
 			else
 			{
@@ -116,6 +122,7 @@ struct PhysicsInfo
 	float relativeDistSqrd;
 	Vec2 relativeLoc;
 	bool isInEyesight;
-	Vec2 desiredVelocity;
-	std::vector<BehaviourInfo> behaviourInfos;
+	Vec2 totalDesiredVelocity;
+	Vec2 totalSteeringVelocity;
+	float maxSpeed;
 };

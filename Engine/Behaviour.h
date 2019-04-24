@@ -6,13 +6,14 @@
 class Behaviour
 {
 public:
-	Behaviour(PhysicsInfo in_self)
+	Behaviour(PhysicsInfo *in_selfPtr, BehaviourInfo in_info)
 		:
-		self(in_self)
+		selfPtr(in_selfPtr),
+		info(in_info)
 	{
 	}
 
-	void AddTarget(PhysicsInfo worldObjectPhysicsInfos)
+	void AddTarget(PhysicsInfo *worldObjectPhysicsInfos)
 	{
 		targets.push_back(worldObjectPhysicsInfos);
 	}
@@ -26,7 +27,7 @@ public:
 
 			for (int i = 0; i < targets.size(); i++)
 			{
-				averageLoc = averageLoc + targets[i].loc;
+				averageLoc = averageLoc + targets[i]->loc;
 			}
 
 			averageLoc = (averageLoc / (float)targets.size());
@@ -45,10 +46,10 @@ public:
 			float totalInvDist = 0.0f;
 			for (int i = 0; i < targets.size(); i++)
 			{
-				if (targets[i].relativeDistSqrd > 0.1f)
+				if (targets[i]->relativeDistSqrd > 0.1f)
 				{
-					float invDist = 1.0f / targets[i].relativeDistSqrd;
-					averageLoc = averageLoc + targets[i].loc * invDist;
+					float invDist = 1.0f / targets[i]->relativeDistSqrd;
+					averageLoc = averageLoc + targets[i]->loc * invDist;
 					totalInvDist += invDist;
 				}
 			}
@@ -60,6 +61,26 @@ public:
 		return averageLoc;
 	}
 
+	Vec2 FindCumulativeLocOfTargetsByDistance()
+	{
+		Vec2 cumuLoc;
+
+		if (targets.size() > 0)
+		{
+			for (int i = 0; i < targets.size(); i++)
+			{
+				if (targets[i]->relativeDistSqrd > 0.1f)
+				{
+					float invDist = 1.0f / sqrt(targets[i]->relativeDistSqrd);
+					cumuLoc = cumuLoc + (targets[i]->loc - selfPtr->loc) * invDist;
+				}
+			}
+
+		}
+
+		return cumuLoc;
+	}
+
 	Vec2 FindWeightedAverageVelocityOfTargetsByDistance()
 	{
 		Vec2 averageVelocity;
@@ -69,10 +90,10 @@ public:
 			float totalInvDist = 0.0f;
 			for (int i = 0; i < targets.size(); i++)
 			{
-				if (targets[i].relativeDistSqrd > 0.1f)
+				if (targets[i]->relativeDistSqrd > 0.1f)
 				{
-					float invDist = 1.0f / targets[i].relativeDistSqrd;
-					averageVelocity = averageVelocity + targets[i].velocity * invDist;
+					float invDist = 1.0f / targets[i]->relativeDistSqrd;
+					averageVelocity = averageVelocity + targets[i]->velocity * invDist;
 					totalInvDist += invDist;
 				}
 			}
@@ -84,73 +105,35 @@ public:
 		return averageVelocity;
 	}
 
-	virtual Vec2 PerformLogicAndGetVelocityVector() = 0;
+	virtual void PerformLogicAndSetVelocityVectors() = 0;
 
 
-protected:
-	PhysicsInfo self;
-	std::vector<PhysicsInfo> targets;
-	BEHAVIOUR_TYPE behaviourType;
-	Vec2 resultantVector;
+//protected:
+	PhysicsInfo *selfPtr;
+	std::vector<PhysicsInfo*> targets;
+	BehaviourInfo info;
 
 };
 
 class BehaviourSeek : public Behaviour
 {
 public:
-	BehaviourSeek(PhysicsInfo in_self)
+	BehaviourSeek(PhysicsInfo *in_selfPtr, BehaviourInfo in_info)
 		:
-		Behaviour(in_self)
+		Behaviour(in_selfPtr, in_info)
 	{
-		behaviourType = BEHAVIOUR_TYPE::SEEK;
-	}
-
-	
-
-	Vec2 PerformLogicAndGetVelocityVector()
-	{
-		resultantVector = Vec2();
-
-		if (targets.size() > 0)
-		{
-			Vec2 averageLoc = FindWeightedAverageLocOfTargetsByDistance();
-
-			resultantVector = (averageLoc - self.loc);
-		}
-
-		return resultantVector;
 	}
 
 
-private:
-
-
-};
-
-class BehaviourCohesion : public Behaviour
-{
-public:
-	BehaviourCohesion(PhysicsInfo in_self)
-		:
-		Behaviour(in_self)
+	void PerformLogicAndSetVelocityVectors()
 	{
-		behaviourType = BEHAVIOUR_TYPE::SEEK;
-	}
-
-
-
-	Vec2 PerformLogicAndGetVelocityVector()
-	{
-		resultantVector = Vec2();
-
 		if (targets.size() > 0)
 		{
 			Vec2 averageLoc = FindAverageLocOfTargets();
 
-			resultantVector = (averageLoc - self.loc);
+			info.desiredVelocity = (averageLoc - selfPtr->loc).Normalize() * selfPtr->maxSpeed;
+			info.steeringVelocity = info.desiredVelocity - selfPtr->velocity;
 		}
-
-		return resultantVector;
 	}
 
 
@@ -163,26 +146,22 @@ private:
 class BehaviourFlee : public Behaviour
 {
 public:
-	BehaviourFlee(PhysicsInfo in_self)
+	BehaviourFlee(PhysicsInfo *in_selfPtr, BehaviourInfo in_info)
 		:
-		Behaviour(in_self)
+		Behaviour(in_selfPtr, in_info)
 	{
-		behaviourType = BEHAVIOUR_TYPE::FLEE;
 	}
 
 
-	Vec2 PerformLogicAndGetVelocityVector()
+	void PerformLogicAndSetVelocityVectors()
 	{
-		resultantVector = Vec2();
-
 		if (targets.size() > 0)
 		{
-			Vec2 averageLoc = FindWeightedAverageLocOfTargetsByDistance();
+			Vec2 averageLoc = FindAverageLocOfTargets();
 
-			resultantVector = (self.loc - averageLoc);
+			info.desiredVelocity = (selfPtr->loc - averageLoc).Normalize() * selfPtr->maxSpeed;
+			info.steeringVelocity = info.desiredVelocity - selfPtr->velocity;
 		}
-
-		return resultantVector;
 	}
 
 
@@ -191,59 +170,159 @@ private:
 
 };
 
-class BehaviourAlign : public Behaviour
-{
-public:
-	BehaviourAlign(PhysicsInfo in_self)
-		:
-		Behaviour(in_self)
-	{
-		behaviourType = BEHAVIOUR_TYPE::ALIGN;
-	}
+//class BehaviourSeparation : public Behaviour
+//{
+//public:
+//	BehaviourSeparation(PhysicsInfo in_self)
+//		:
+//		Behaviour(in_self)
+//	{
+//		behaviourType = BEHAVIOUR_TYPE::SEPARATION;
+//	}
+//
+//
+//
+//	Vec2 PerformLogicAndGetVelocityVectors()
+//	{
+//		resultantVector = Vec2();
+//
+//		if (targets.size() > 0)
+//		{
+//			Vec2 cumuLoc = FindCumulativeLocOfTargetsByDistance();
+//
+//			resultantVector = (cumuLoc - self.loc);
+//		}
+//
+//		return resultantVector;
+//	}
+//
+//
+//private:
+//
+//
+//};
+//
+//class BehaviourCohesion : public Behaviour
+//{
+//public:
+//	BehaviourCohesion(PhysicsInfo in_self)
+//		:
+//		Behaviour(in_self)
+//	{
+//		behaviourType = BEHAVIOUR_TYPE::SEEK;
+//	}
+//
+//
+//
+//	Vec2 PerformLogicAndGetVelocityVectors()
+//	{
+//		resultantVector = Vec2();
+//
+//		if (targets.size() > 0)
+//		{
+//			Vec2 averageLoc = FindAverageLocOfTargets();
+//
+//			resultantVector = (averageLoc - self.loc);
+//		}
+//
+//		return resultantVector;
+//	}
+//
+//
+//private:
+//
+//
+//};
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//class BehaviourAlign : public Behaviour
+//{
+//public:
+//	BehaviourAlign(PhysicsInfo in_self)
+//		:
+//		Behaviour(in_self)
+//	{
+//		behaviourType = BEHAVIOUR_TYPE::ALIGN;
+//	}
+//
+//
+//	Vec2 PerformLogicAndGetVelocityVectors()
+//	{
+//		resultantVector = Vec2();
+//
+//		if (targets.size() > 0)
+//		{
+//			Vec2 averageVelocity = FindWeightedAverageVelocityOfTargetsByDistance();
+//
+//			resultantVector = averageVelocity;
+//		}
+//
+//		return resultantVector;
+//	}
+//
+//
+//private:
+//
+//
+//};
 
 
-	Vec2 PerformLogicAndGetVelocityVector()
-	{
-		resultantVector = Vec2();
-
-		if (targets.size() > 0)
-		{
-			Vec2 averageVelocity = FindWeightedAverageVelocityOfTargetsByDistance();
-
-			resultantVector = averageVelocity;
-		}
-
-		return resultantVector;
-	}
-
-
-private:
-
-
-};
-
-
-static Behaviour* CreateBehaviour(PhysicsInfo self, BEHAVIOUR_TYPE type)
-{
-	switch (type)
-	{
-	case BEHAVIOUR_TYPE::SEEK:
-	{
-		return new BehaviourSeek(self);
-	}break;
-	case BEHAVIOUR_TYPE::FLEE:
-	{
-		return new BehaviourFlee(self);
-	}break;
-	case BEHAVIOUR_TYPE::ALIGN:
-	{
-		return new BehaviourAlign(self);
-	}break;
-	case BEHAVIOUR_TYPE::COHESION:
-	{
-		return new BehaviourSeek(self);
-	}break;
-	}
-}
+//static Behaviour* CreateBehaviour(PhysicsInfo self, BEHAVIOUR_TYPE type)
+//{
+//	switch (type)
+//	{
+//	case BEHAVIOUR_TYPE::SEEK:
+//	{
+//		return new BehaviourSeek(self);
+//	}break;
+//	//case BEHAVIOUR_TYPE::FLEE:
+//	//{
+//	//	return new BehaviourFlee(self);
+//	//}break;
+//	//case BEHAVIOUR_TYPE::ALIGN:
+//	//{
+//	//	return new BehaviourAlign(self);
+//	//}break;
+//	//case BEHAVIOUR_TYPE::COHESION:
+//	//{
+//	//	return new BehaviourCohesion(self);
+//	//}break;
+//	//case BEHAVIOUR_TYPE::SEPARATION:
+//	//{
+//	//	return new BehaviourSeparation(self);
+//	//}break;
+//	}
+//}
 
 

@@ -8,58 +8,59 @@ class WorldObject
 {
 public:
 
-	WorldObject(PhysicsInfo inPhysicsInfo, float in_mass, float in_maxSpeed, Color in_color)
+	WorldObject(PhysicsInfo *in_PhysicsInfoPtr, float in_mass, Color in_color)
 		:
-		physicsInfo(inPhysicsInfo),
+		physicsInfoPtr(in_PhysicsInfoPtr),
 		mass(in_mass),
-		maxSpeed(in_maxSpeed),
 		color(in_color)
 	{
-		switch (inPhysicsInfo.brainType)
+		switch (physicsInfoPtr->brainType)
 		{
 		case BRAIN_TYPE::SEEKER:
 		{
-			brainPtr = new SeekerBrain(physicsInfo);
+			brainPtr = new SeekerBrain(physicsInfoPtr);
 		}break;
 		case BRAIN_TYPE::SCARED:
 		{
-			brainPtr = new ScaredBrain(physicsInfo);
+			brainPtr = new ScaredBrain(physicsInfoPtr);
 		}break;
 		}
 	}
 
-	void DetermineAction(std::vector<PhysicsInfo> &worldObjectPhysicsInfos)
+	void DetermineAction(std::vector<PhysicsInfo*> worldObjectPhysicsInfos)
 	{
-		brainPtr->Refresh(physicsInfo);
+		brainPtr->Refresh();
 
-		physicsInfo = brainPtr->DetermineDesiredVelocity(worldObjectPhysicsInfos);
+		brainPtr->DetermineVelocities(worldObjectPhysicsInfos);
 	}
 
 
 	void Move(float dt)
 	{
-		physicsInfo.loc = physicsInfo.loc + physicsInfo.velocity * dt;
+		physicsInfoPtr->loc = physicsInfoPtr->loc + physicsInfoPtr->velocity * dt;
 	}
 
 	void Update(float dt)
 	{
+		// Cap desiredVelocity at maxSpeed
+		//if (physicsInfo.totalDesiredVelocity.GetMagnitude() > physicsInfo.maxSpeed)
+		//{
+		//	physicsInfo.desiredVelocity = (physicsInfo.desiredVelocity).Normalize() * physicsInfo.maxSpeed;
+		//}
 
-
-		physicsInfo.desiredVelocity = (physicsInfo.desiredVelocity).Normalize() * maxSpeed;
-
-		ApplyForce(physicsInfo.desiredVelocity - physicsInfo.velocity, dt);
+		ApplyForce(physicsInfoPtr->totalSteeringVelocity, dt);
 
 		Move(dt);
 	}
 
 	void ApplyForce(Vec2 newForce, float dt)
 	{
-		physicsInfo.velocity = physicsInfo.velocity + (newForce * dt) / mass;
+		physicsInfoPtr->velocity = physicsInfoPtr->velocity + (newForce * dt) / mass;
 	}
 
-	PhysicsInfo GetPhysicsInfo()
+	PhysicsInfo * GetPhysicsInfo()
 	{
-		return physicsInfo;
+		return physicsInfoPtr;
 	}
 
 	float GetMass()
@@ -69,7 +70,7 @@ public:
 
 	float GetMaxSpeed()
 	{
-		return maxSpeed;
+		return physicsInfoPtr->maxSpeed;
 	}
 
 	Color GetColor()
@@ -85,9 +86,8 @@ public:
 
 private:
 
-	PhysicsInfo physicsInfo;
+	PhysicsInfo *physicsInfoPtr;
 	float mass;
-	float maxSpeed;
 	float radius = 5.0f;
 	Color color = Colors::Red;
 	Brain* brainPtr = nullptr;
