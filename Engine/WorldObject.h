@@ -16,13 +16,17 @@ public:
 	{
 		switch (physicsInfoPtr->brainType)
 		{
-		case BRAIN_TYPE::SEEKER:
+		case BRAIN_TYPE::SHARK:
 		{
-			brainPtr = new SeekerBrain(physicsInfoPtr);
+			brainPtr = new SharkBrain(physicsInfoPtr);
 		}break;
-		case BRAIN_TYPE::SCARED:
+		case BRAIN_TYPE::FISH:
 		{
-			brainPtr = new ScaredBrain(physicsInfoPtr);
+			brainPtr = new FishBrain(physicsInfoPtr);
+		}break;
+		case BRAIN_TYPE::BEE:
+		{
+			brainPtr = new BeeBrain(physicsInfoPtr);
 		}break;
 		}
 	}

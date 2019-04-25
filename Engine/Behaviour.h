@@ -13,9 +13,10 @@ public:
 	{
 	}
 
-	void AddTarget(PhysicsInfo *worldObjectPhysicsInfos)
+	void AddTarget(PhysicsInfo *in_worldObjectPhysicsInfo, RelativeInfo in_targetRelativeInfo)
 	{
-		targets.push_back(worldObjectPhysicsInfos);
+		targets.push_back(in_worldObjectPhysicsInfo);
+		targetRelativeInfos.push_back(in_targetRelativeInfo);
 	}
 
 	Vec2 FindAverageLocOfTargets()
@@ -46,9 +47,9 @@ public:
 			float totalInvDist = 0.0f;
 			for (int i = 0; i < targets.size(); i++)
 			{
-				if (targets[i]->relativeDistSqrd > 0.1f)
+				if (targetRelativeInfos[i].relativeDistSqrd > 0.1f)
 				{
-					float invDist = 1.0f / targets[i]->relativeDistSqrd;
+					float invDist = 1.0f / targetRelativeInfos[i].relativeDistSqrd;
 					averageLoc = averageLoc + targets[i]->loc * invDist;
 					totalInvDist += invDist;
 				}
@@ -69,9 +70,9 @@ public:
 		{
 			for (int i = 0; i < targets.size(); i++)
 			{
-				if (targets[i]->relativeDistSqrd > 0.1f)
+				if (targetRelativeInfos[i].relativeDistSqrd > 0.1f)
 				{
-					float invDist = 1.0f / sqrt(targets[i]->relativeDistSqrd);
+					float invDist = 1.0f / sqrt(targetRelativeInfos[i].relativeDistSqrd);
 					cumuLoc = cumuLoc + (targets[i]->loc - selfPtr->loc) * invDist;
 				}
 			}
@@ -90,9 +91,9 @@ public:
 			float totalInvDist = 0.0f;
 			for (int i = 0; i < targets.size(); i++)
 			{
-				if (targets[i]->relativeDistSqrd > 0.1f)
+				if (targetRelativeInfos[i].relativeDistSqrd > 0.1f)
 				{
-					float invDist = 1.0f / sqrt(targets[i]->relativeDistSqrd);
+					float invDist = 1.0f / sqrt(targetRelativeInfos[i].relativeDistSqrd);
 					averageVelocity = averageVelocity + targets[i]->velocity * invDist;
 					totalInvDist += invDist;
 				}
@@ -113,6 +114,7 @@ public:
 	std::vector<PhysicsInfo*> targets;
 	std::vector<Behaviour*> allBehaviours;
 	BehaviourInfo info;
+	std::vector<RelativeInfo> targetRelativeInfos;
 
 };
 

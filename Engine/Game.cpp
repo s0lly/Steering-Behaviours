@@ -26,27 +26,37 @@ Game::Game( MainWindow& wnd )
 	wnd( wnd ),
 	gfx( wnd )
 {
-	int maxObjects = 100;
+	int maxObjects = 400;
 
 	for (int i = 0; i < maxObjects; i++)
 	{
 		Color newColor = Colors::White;
 		float newMaxSpeed = 0.0f;
 
-		BRAIN_TYPE brainType = i == 0 ? BRAIN_TYPE::SEEKER : BRAIN_TYPE::SCARED; // (BRAIN_TYPE)(rand() % 2);
+		BRAIN_TYPE brainType = (i < 1) ? BRAIN_TYPE::SHARK : ((i < 200) ? BRAIN_TYPE::FISH : BRAIN_TYPE::BEE); // (BRAIN_TYPE)(rand() % 2);
 		
-		if (brainType == BRAIN_TYPE::SEEKER)
+		EYESIGHT_RANGE fov = EYESIGHT_RANGE::FOV_360;
+
+		if (brainType == BRAIN_TYPE::SHARK)
 		{
 			newMaxSpeed = 500.0f;
 			newColor = Colors::Red;
+			fov = EYESIGHT_RANGE::FOV_270;
 		}
-		if (brainType == BRAIN_TYPE::SCARED)
+		if (brainType == BRAIN_TYPE::FISH)
 		{
 			newMaxSpeed = 500.0f;
 			newColor = Colors::Green;
+			fov = EYESIGHT_RANGE::FOV_270;
+		}
+		if (brainType == BRAIN_TYPE::BEE)
+		{
+			newMaxSpeed = 1000.0f;
+			newColor = Colors::Yellow;
+			fov = EYESIGHT_RANGE::FOV_360;
 		}
 
-		worldObjects.push_back(WorldObject(new PhysicsInfo(brainType, Vec2((float)(rand() % (gfx.ScreenWidth)), (float)(rand() % (gfx.ScreenHeight))), Vec2(0.0f, 0.0f), worldObjects.size(), newMaxSpeed), 1.0f, newColor));// (float)(rand() % 100) - 50.0f, (float)(rand() % 100) - 50.0f), 1.0f)
+		worldObjects.push_back(WorldObject(new PhysicsInfo(brainType, Vec2((float)(rand() % (gfx.ScreenWidth)), (float)(rand() % (gfx.ScreenHeight))), Vec2(0.0f, 0.0f), worldObjects.size(), newMaxSpeed, fov), 1.0f, newColor));// (float)(rand() % 100) - 50.0f, (float)(rand() % 100) - 50.0f), 1.0f)
 	}
 
 	//worldObjects.push_back(WorldObject(PhysicsInfo(BRAIN_TYPE::SEEKER, Vec2((float)(rand() % (gfx.ScreenWidth)), (float)(rand() % (gfx.ScreenHeight))), Vec2(0.0f, 0.0f), worldObjects.size()), 1.0f, 500.0f, Colors::Red));// (float)(rand() % 100) - 50.0f, (float)(rand() % 100) - 50.0f), 1.0f)
@@ -253,20 +263,12 @@ void Game::ProcessInput()
 		Color newColor = Colors::White;
 		float newMaxSpeed = 0.0f;
 
-		BRAIN_TYPE brainType = BRAIN_TYPE::SEEKER; //(BRAIN_TYPE)(rand() % 2);
+		BRAIN_TYPE brainType = BRAIN_TYPE::SHARK; //(BRAIN_TYPE)(rand() % 2);
+		newMaxSpeed = 500.0f;
+		newColor = Colors::Red;
+		EYESIGHT_RANGE fov = EYESIGHT_RANGE::FOV_270;
 
-		if (brainType == BRAIN_TYPE::SEEKER)
-		{
-			newMaxSpeed = 500.0f;
-			newColor = Colors::Red;
-		}
-		if (brainType == BRAIN_TYPE::SCARED)
-		{
-			newMaxSpeed = 80.0f;
-			newColor = Colors::Green;
-		}
-
-		worldObjects.push_back(WorldObject(new PhysicsInfo(brainType, Vec2((float)(rand() % (gfx.ScreenWidth)), (float)(rand() % (gfx.ScreenHeight))), Vec2(0.0f, 0.0f), worldObjects.size(), newMaxSpeed), 1.0f, newColor));// (float)(rand() % 100) - 50.0f, (float)(rand() % 100) - 50.0f), 1.0f)
+		worldObjects.push_back(WorldObject(new PhysicsInfo(brainType, Vec2((float)(rand() % (gfx.ScreenWidth)), (float)(rand() % (gfx.ScreenHeight))), Vec2(0.0f, 0.0f), worldObjects.size(), newMaxSpeed, fov), 1.0f, newColor));// (float)(rand() % 100) - 50.0f, (float)(rand() % 100) - 50.0f), 1.0f)
 	}
 }
 
@@ -296,10 +298,24 @@ void Game::UpdateModel()
 		worldObjectPhysicsInfos.push_back(worldObjects[i].GetPhysicsInfo());
 	}
 
-	for (int i = 0; i < worldObjects.size(); i++)
+	int numThreads = 20;
+	int size = (int)worldObjects.size();
+	int threadSize = size / numThreads + 1;
+
+	auto worldObjectsPtr = &worldObjects;
+
+	std::vector<std::thread> threadList;
+	for (int k = 0; k < numThreads; k++)
 	{
-		worldObjects[i].DetermineAction(worldObjectPhysicsInfos);
+		threadList.push_back(std::thread([worldObjectsPtr, worldObjectPhysicsInfos, k, threadSize]()
+		{
+			for (int i = k * threadSize; (i < (k + 1) * threadSize) && (i < worldObjectsPtr->size()); i++)
+			{
+				(*worldObjectsPtr)[i].DetermineAction(worldObjectPhysicsInfos);
+			}
+		}));
 	}
+	std::for_each(threadList.begin(), threadList.end(), std::mem_fn(&std::thread::join));
 
 
 	for (int i = 0; i < worldObjects.size(); i++)
@@ -341,7 +357,7 @@ void Game::ComposeFrame()
 	}
 	
 	
-	
+	relAngle = 0.0f;
 
 
 	if (wnd.kbd.KeyIsPressed('Q'))

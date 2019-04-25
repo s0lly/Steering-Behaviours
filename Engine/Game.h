@@ -25,7 +25,8 @@
 #include "Graphics.h"
 #include "WorldObject.h"
 #include "RetroContent.h"
-#include <vector> 
+#include <vector>
+#include <thread>
 
 class Game
 {
