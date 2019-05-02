@@ -59,17 +59,14 @@ private:
 	bool spaceIsPressed = false;
 	bool spaceIsActive = true;
 
-	bool f1IsPressed = false;
-	bool f1IsActive = false;
+	bool mouseLeftIsPressed = false;
+	bool mouseLeftIsActive = false;
 
-	bool f2IsPressed = false;
-	bool f2IsActive = false;
 
-	bool f3IsPressed = false;
-	bool f3IsActive = false;
-
-	bool f4IsPressed = false;
-	bool f4IsActive = false;
+	std::vector<bool> canDisplayVectors;
+	std::vector<std::string> displayVectorsNames;
+	std::vector<bool> activeSteeringForces;
+	std::vector<Color> displayVectorsColors;
 
 	bool crtlIsPressed = false;
 	bool crtlIsActive = false;

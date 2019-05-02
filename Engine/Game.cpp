@@ -26,28 +26,28 @@ Game::Game( MainWindow& wnd )
 	wnd( wnd ),
 	gfx( wnd )
 {
-	int maxObjects = 400;
+	int maxObjects = 51;
 
 	for (int i = 0; i < maxObjects; i++)
 	{
 		Color newColor = Colors::White;
 		float newMaxSpeed = 0.0f;
 
-		BRAIN_TYPE brainType = (i < 1) ? BRAIN_TYPE::SHARK : ((i < 200) ? BRAIN_TYPE::FISH : BRAIN_TYPE::BEE); // (BRAIN_TYPE)(rand() % 2);
+		BRAIN_TYPE brainType = (i < 1) ? BRAIN_TYPE::SHARK : ((i < 200) ? BRAIN_TYPE::BEE : BRAIN_TYPE::BEE); // (BRAIN_TYPE)(rand() % 2);
 		
 		EYESIGHT_RANGE fov = EYESIGHT_RANGE::FOV_360;
 
 		if (brainType == BRAIN_TYPE::SHARK)
 		{
-			newMaxSpeed = 500.0f;
+			newMaxSpeed = 450.0f;
 			newColor = Colors::Red;
-			fov = EYESIGHT_RANGE::FOV_270;
+			fov = EYESIGHT_RANGE::FOV_360;
 		}
 		if (brainType == BRAIN_TYPE::FISH)
 		{
 			newMaxSpeed = 500.0f;
 			newColor = Colors::Green;
-			fov = EYESIGHT_RANGE::FOV_270;
+			fov = EYESIGHT_RANGE::FOV_360;
 		}
 		if (brainType == BRAIN_TYPE::BEE)
 		{
@@ -55,15 +55,53 @@ Game::Game( MainWindow& wnd )
 			newColor = Colors::Yellow;
 			fov = EYESIGHT_RANGE::FOV_360;
 		}
+		if (brainType == BRAIN_TYPE::NONE)
+		{
+			newMaxSpeed = 100.0f;
+			newColor = Colors::Blue;
+			fov = EYESIGHT_RANGE::FOV_360;
+		}
 
-		worldObjects.push_back(WorldObject(new PhysicsInfo(brainType, Vec2((float)(rand() % (gfx.ScreenWidth)), (float)(rand() % (gfx.ScreenHeight))), Vec2(0.0f, 0.0f), worldObjects.size(), newMaxSpeed, fov), 1.0f, newColor));// (float)(rand() % 100) - 50.0f, (float)(rand() % 100) - 50.0f), 1.0f)
+		worldObjects.push_back(WorldObject(new PhysicsInfo(brainType, Vec2((float)(rand() % (gfx.ScreenWidth)), (float)(rand() % (gfx.ScreenHeight))), Vec2(0.0f, 0.0f), worldObjects.size(), newMaxSpeed, fov), 1.0f, 5.0f, newColor));// (float)(rand() % 100) - 50.0f, (float)(rand() % 100) - 50.0f), 1.0f)
 	}
+
+	//for (int j = -60; j < 151; j++)
+	//{
+	//	for (int i = -60; i < 221; i++)
+	//	{
+	//		if (i == -60 || j == -60 || i == 220 || j == 150)
+	//		{
+	//			worldObjects.push_back(WorldObject(new PhysicsInfo(BRAIN_TYPE::NONE, Vec2((float)(i * 10), (float)(j * 10)), Vec2(0.0f, 0.0f), worldObjects.size(), 0.0f, FOV_360), 1.0f, 5.0f, Colors::Gray));
+	//
+	//		}
+	//	}
+	//}
 
 	//worldObjects.push_back(WorldObject(PhysicsInfo(BRAIN_TYPE::SEEKER, Vec2((float)(rand() % (gfx.ScreenWidth)), (float)(rand() % (gfx.ScreenHeight))), Vec2(0.0f, 0.0f), worldObjects.size()), 1.0f, 500.0f, Colors::Red));// (float)(rand() % 100) - 50.0f, (float)(rand() % 100) - 50.0f), 1.0f)
 
 	
 	cameraLoc = Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
 	cameraZoom = 1.0f;
+
+	canDisplayVectors = std::vector<bool>(13, false);
+	displayVectorsNames = std::vector<std::string>(13, "");
+	activeSteeringForces = std::vector<bool>(13, false);
+
+	displayVectorsColors.push_back(Colors::Magenta);
+	displayVectorsColors.push_back(Colors::Cyan);
+	displayVectorsColors.push_back(Color(255, 127, 0));
+
+	displayVectorsColors.push_back(Color(0, 0, 0));
+
+	displayVectorsColors.push_back(Colors::Red);
+	displayVectorsColors.push_back(Colors::Green);
+	displayVectorsColors.push_back(Colors::Yellow);
+	displayVectorsColors.push_back(Colors::White);
+	displayVectorsColors.push_back(Color(255, 0, 127));
+	displayVectorsColors.push_back(Color(0, 127, 255));
+	displayVectorsColors.push_back(Color(127, 255, 0));
+	displayVectorsColors.push_back(Color(127, 0, 255));
+	displayVectorsColors.push_back(Color(0, 255, 127));
 }
 
 void Game::Go()
@@ -82,6 +120,62 @@ void Game::Go()
 
 void Game::ProcessInput()
 {
+	// add mouse input instead
+	int numBehaviours = worldObjects[currentViewedWorldObject].brainPtr->behaviours.size();
+
+	displayVectorsNames = std::vector<std::string>(13, "");
+
+	displayVectorsNames[0] = "CURRENT";
+	displayVectorsNames[1] = "DESIRED";
+	displayVectorsNames[2] = "STEERING";
+
+	for (int i = 0; i < numBehaviours; i++)
+	{
+		displayVectorsNames[4 + i] = worldObjects[currentViewedWorldObject].brainPtr->behaviours[i]->info.name;
+	}
+
+	if (wnd.mouse.LeftIsPressed())
+	{
+		if (!mouseLeftIsPressed)
+		{
+			mouseLeftIsPressed = true;
+			mouseLeftIsActive = true;
+		}
+		else
+		{
+			mouseLeftIsActive = false;
+		}
+	}
+	else
+	{
+		mouseLeftIsPressed = false;
+		mouseLeftIsActive = false;
+	}
+
+	if (mouseLeftIsActive)
+	{
+		Vec2 mousePos(wnd.mouse.GetPosX(), wnd.mouse.GetPosY());
+
+		for (int i = 0; i < numBehaviours + 4; i++)
+		{
+			if (InRectArea(Rect{ Vec2(50.0f, 200.0f + 50.0f * (float)i), 250.0f, 25.0f }, mousePos))
+			{
+				canDisplayVectors[i] = !canDisplayVectors[i];
+			}
+		}
+
+		for (int i = 0; i < numBehaviours; i++)
+		{
+			if (InRectArea(Rect{ Vec2((float)(350.0f), (float)(gfx.ScreenHeight * 1 / 9) + 100.0f + 50.0f * (float)(i + 4) + 5.0f), 15.0f, 15.0f }, mousePos))
+			{
+				worldObjects[currentViewedWorldObject].brainPtr->behaviours[i]->info.isActive = !worldObjects[currentViewedWorldObject].brainPtr->behaviours[i]->info.isActive;
+			}
+		}
+
+		
+		
+	}
+
 	if (wnd.kbd.KeyIsPressed(VK_SPACE))
 	{
 		if (!spaceIsPressed)
@@ -96,57 +190,57 @@ void Game::ProcessInput()
 	}
 
 
-	if (wnd.kbd.KeyIsPressed(VK_F1))
-	{
-		if (!f1IsPressed)
-		{
-			f1IsPressed = true;
-			f1IsActive = !f1IsActive;
-		}
-	}
-	else
-	{
-		f1IsPressed = false;
-	}
-
-	if (wnd.kbd.KeyIsPressed(VK_F2))
-	{
-		if (!f2IsPressed)
-		{
-			f2IsPressed = true;
-			f2IsActive = !f2IsActive;
-		}
-	}
-	else
-	{
-		f2IsPressed = false;
-	}
-
-	if (wnd.kbd.KeyIsPressed(VK_F3))
-	{
-		if (!f3IsPressed)
-		{
-			f3IsPressed = true;
-			f3IsActive = !f3IsActive;
-		}
-	}
-	else
-	{
-		f3IsPressed = false;
-	}
-
-	if (wnd.kbd.KeyIsPressed(VK_F4))
-	{
-		if (!f4IsPressed)
-		{
-			f4IsPressed = true;
-			f4IsActive = !f4IsActive;
-		}
-	}
-	else
-	{
-		f4IsPressed = false;
-	}
+	//if (wnd.kbd.KeyIsPressed(VK_F1))
+	//{
+	//	if (!f1IsPressed)
+	//	{
+	//		f1IsPressed = true;
+	//		f1IsActive = !f1IsActive;
+	//	}
+	//}
+	//else
+	//{
+	//	f1IsPressed = false;
+	//}
+	//
+	//if (wnd.kbd.KeyIsPressed(VK_F2))
+	//{
+	//	if (!f2IsPressed)
+	//	{
+	//		f2IsPressed = true;
+	//		f2IsActive = !f2IsActive;
+	//	}
+	//}
+	//else
+	//{
+	//	f2IsPressed = false;
+	//}
+	//
+	//if (wnd.kbd.KeyIsPressed(VK_F3))
+	//{
+	//	if (!f3IsPressed)
+	//	{
+	//		f3IsPressed = true;
+	//		f3IsActive = !f3IsActive;
+	//	}
+	//}
+	//else
+	//{
+	//	f3IsPressed = false;
+	//}
+	//
+	//if (wnd.kbd.KeyIsPressed(VK_F4))
+	//{
+	//	if (!f4IsPressed)
+	//	{
+	//		f4IsPressed = true;
+	//		f4IsActive = !f4IsActive;
+	//	}
+	//}
+	//else
+	//{
+	//	f4IsPressed = false;
+	//}
 
 	if (wnd.kbd.KeyIsPressed(VK_CONTROL))
 	{
@@ -209,6 +303,11 @@ void Game::ProcessInput()
 		{
 			currentViewedWorldObject = worldObjects.size() - 1;
 		}
+
+		canDisplayVectors = std::vector<bool>(13, false);
+		displayVectorsNames = std::vector<std::string>(13, "");
+		activeSteeringForces = std::vector<bool>(13, false);
+		
 	}
 	if (rightIsActive)
 	{
@@ -217,6 +316,10 @@ void Game::ProcessInput()
 		{
 			currentViewedWorldObject = 0;
 		}
+
+		canDisplayVectors = std::vector<bool>(13, false);
+		displayVectorsNames = std::vector<std::string>(13, "");
+		activeSteeringForces = std::vector<bool>(13, false);
 	}
 
 
@@ -268,7 +371,7 @@ void Game::ProcessInput()
 		newColor = Colors::Red;
 		EYESIGHT_RANGE fov = EYESIGHT_RANGE::FOV_270;
 
-		worldObjects.push_back(WorldObject(new PhysicsInfo(brainType, Vec2((float)(rand() % (gfx.ScreenWidth)), (float)(rand() % (gfx.ScreenHeight))), Vec2(0.0f, 0.0f), worldObjects.size(), newMaxSpeed, fov), 1.0f, newColor));// (float)(rand() % 100) - 50.0f, (float)(rand() % 100) - 50.0f), 1.0f)
+		worldObjects.push_back(WorldObject(new PhysicsInfo(brainType, Vec2((float)(rand() % (gfx.ScreenWidth)), (float)(rand() % (gfx.ScreenHeight))), Vec2(0.0f, 0.0f), worldObjects.size(), newMaxSpeed, fov), 1.0f, 5.0f, newColor));// (float)(rand() % 100) - 50.0f, (float)(rand() % 100) - 50.0f), 1.0f)
 	}
 }
 
@@ -311,7 +414,10 @@ void Game::UpdateModel()
 		{
 			for (int i = k * threadSize; (i < (k + 1) * threadSize) && (i < worldObjectsPtr->size()); i++)
 			{
-				(*worldObjectsPtr)[i].DetermineAction(worldObjectPhysicsInfos);
+				if ((*worldObjectsPtr)[i].GetPhysicsInfo()->brainType != BRAIN_TYPE::NONE)
+				{
+					(*worldObjectsPtr)[i].DetermineAction(worldObjectPhysicsInfos);
+				}
 			}
 		}));
 	}
@@ -320,7 +426,10 @@ void Game::UpdateModel()
 
 	for (int i = 0; i < worldObjects.size(); i++)
 	{
-		worldObjects[i].Update(dt);
+		if ((*worldObjectsPtr)[i].GetPhysicsInfo()->brainType != BRAIN_TYPE::NONE)
+		{
+			worldObjects[i].Update(dt);
+		}
 	}
 	
 }
@@ -357,7 +466,7 @@ void Game::ComposeFrame()
 	}
 	
 	
-	relAngle = 0.0f;
+	//relAngle = 0.0f;
 
 
 	if (wnd.kbd.KeyIsPressed('Q'))
@@ -406,150 +515,180 @@ void Game::ComposeFrame()
 		relativeLoc.x = (worldObjects[i].GetPhysicsInfo()->loc - cameraLoc).x * cosAngle + (worldObjects[i].GetPhysicsInfo()->loc - cameraLoc).y * sinAngle;
 		relativeLoc.y = (worldObjects[i].GetPhysicsInfo()->loc - cameraLoc).y * cosAngle - (worldObjects[i].GetPhysicsInfo()->loc - cameraLoc).x * sinAngle;
 
-
 		gfx.DrawCircle((relativeLoc) / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2)), worldObjects[i].GetRadius() / cameraZoom, worldObjects[i].GetColor());
 	}
 
 	RetroContent::DrawString(gfx, "VECTORS", Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 1 / 9)), 6, Colors::Green);
 
-	if (f1IsActive)
+	for (int i = 0; i < canDisplayVectors.size(); i++)
 	{
-		// Draw velocity vector
-
-		Vec2 lineStart = Vec2() + cameraLoc;
-		Vec2 lineEnd = worldObjects[currentViewedWorldObject].GetPhysicsInfo()->velocity + cameraLoc;
-
-		Vec2 relativeLocStart = Vec2();
-		relativeLocStart.x = (lineStart - cameraLoc).x * cosAngle + (lineStart - cameraLoc).y * sinAngle;
-		relativeLocStart.y = (lineStart - cameraLoc).y * cosAngle - (lineStart - cameraLoc).x * sinAngle;
-
-		relativeLocStart = relativeLocStart / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
-
-		Vec2 relativeLocEnd = Vec2();
-		relativeLocEnd.x = (lineEnd - cameraLoc).x * cosAngle + (lineEnd - cameraLoc).y * sinAngle;
-		relativeLocEnd.y = (lineEnd - cameraLoc).y * cosAngle - (lineEnd - cameraLoc).x * sinAngle;
-
-		relativeLocEnd = relativeLocEnd / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
-
-
-		gfx.DrawLine(Line(relativeLocStart, relativeLocEnd), relativeLocStart, relativeLocEnd, Colors::Magenta);
-		gfx.DrawCircle((relativeLocEnd), 5.0f / cameraZoom, Colors::Magenta);
-
-
-
-		RetroContent::DrawString(gfx, "CURRENT", Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 1 / 9) + 100.0f), 3, Colors::Magenta);
-	}
-	else
-	{
-		RetroContent::DrawString(gfx, "CURRENT", Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 1 / 9) + 100.0f), 3, Colors::Gray);
-	}
-
-
-
-	if (f2IsActive)
-	{
-		// Draw desired velocity vector
-
-		Vec2 line2Start = Vec2() + cameraLoc;
-		Vec2 line2End = worldObjects[currentViewedWorldObject].GetPhysicsInfo()->totalDesiredVelocity + cameraLoc;
-
-		Vec2 relativeLoc2Start = Vec2();
-		relativeLoc2Start.x = (line2Start - cameraLoc).x * cosAngle + (line2Start - cameraLoc).y * sinAngle;
-		relativeLoc2Start.y = (line2Start - cameraLoc).y * cosAngle - (line2Start - cameraLoc).x * sinAngle;
-
-		relativeLoc2Start = relativeLoc2Start / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
-
-		Vec2 relativeLoc2End = Vec2();
-		relativeLoc2End.x = (line2End - cameraLoc).x * cosAngle + (line2End - cameraLoc).y * sinAngle;
-		relativeLoc2End.y = (line2End - cameraLoc).y * cosAngle - (line2End - cameraLoc).x * sinAngle;
-
-		relativeLoc2End = relativeLoc2End / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
-
-
-		gfx.DrawLine(Line(relativeLoc2Start, relativeLoc2End), relativeLoc2Start, relativeLoc2End, Colors::Cyan);
-		gfx.DrawCircle((relativeLoc2End), 5.0f / cameraZoom, Colors::Cyan);
-
-		RetroContent::DrawString(gfx, "DESIRED", Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 1 / 9) + 150.0f), 3, Colors::Cyan);
-	}
-	else
-	{
-		RetroContent::DrawString(gfx, "DESIRED", Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 1 / 9) + 150.0f), 3, Colors::Gray);
-	}
-
-
-	if (f3IsActive)
-	{
-		// Draw steering force
-
-		Vec2 line2Start = Vec2() + cameraLoc;
-		Vec2 line2End = worldObjects[currentViewedWorldObject].GetPhysicsInfo()->totalSteeringVelocity + cameraLoc;
-
-		Vec2 relativeLoc2Start = Vec2();
-		relativeLoc2Start.x = (line2Start - cameraLoc).x * cosAngle + (line2Start - cameraLoc).y * sinAngle;
-		relativeLoc2Start.y = (line2Start - cameraLoc).y * cosAngle - (line2Start - cameraLoc).x * sinAngle;
-
-		relativeLoc2Start = relativeLoc2Start / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
-
-		Vec2 relativeLoc2End = Vec2();
-		relativeLoc2End.x = (line2End - cameraLoc).x * cosAngle + (line2End - cameraLoc).y * sinAngle;
-		relativeLoc2End.y = (line2End - cameraLoc).y * cosAngle - (line2End - cameraLoc).x * sinAngle;
-
-		relativeLoc2End = relativeLoc2End / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
-
-
-		gfx.DrawLine(Line(relativeLoc2Start, relativeLoc2End), relativeLoc2Start, relativeLoc2End, Color(255, 127, 0));
-		gfx.DrawCircle((relativeLoc2End), 5.0f / cameraZoom, Color(255, 127, 0));
-
-		RetroContent::DrawString(gfx, "STEERING", Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 1 / 9) + 200.0f), 3, Color(255, 127, 0));
-	}
-	else
-	{
-		RetroContent::DrawString(gfx, "STEERING", Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 1 / 9) + 200.0f), 3, Colors::Gray);
-	}
-
-	if (f4IsActive)
-	{
-	
-	  // Draw component steering forces
-		
-	
-		for (int b = 0; b < worldObjects[currentViewedWorldObject].brainPtr->behaviours.size(); b++)
+		if (canDisplayVectors[i])
 		{
-			Color c = Color(255, 60 * b * 2, 255 - 40 * b * 2);
-	
-			Vec2 lineAlignStart = Vec2() + cameraLoc;
-			Vec2 lineAlignEnd = worldObjects[currentViewedWorldObject].brainPtr->behaviours[b]->info.steeringVelocity + cameraLoc;
-	
-			Vec2 relativeLocAlignStart = Vec2();
-			relativeLocAlignStart.x = (lineAlignStart - cameraLoc).x * cosAngle + (lineAlignStart - cameraLoc).y * sinAngle;
-			relativeLocAlignStart.y = (lineAlignStart - cameraLoc).y * cosAngle - (lineAlignStart - cameraLoc).x * sinAngle;
-	
-			relativeLocAlignStart = relativeLocAlignStart / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
-	
-			Vec2 relativeLocAlignEnd = Vec2();
-			relativeLocAlignEnd.x = (lineAlignEnd - cameraLoc).x * cosAngle + (lineAlignEnd - cameraLoc).y * sinAngle;
-			relativeLocAlignEnd.y = (lineAlignEnd - cameraLoc).y * cosAngle - (lineAlignEnd - cameraLoc).x * sinAngle;
-	
-			relativeLocAlignEnd = relativeLocAlignEnd / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
-	
-	
-			gfx.DrawLine(Line(relativeLocAlignStart, relativeLocAlignEnd), relativeLocAlignStart, relativeLocAlignEnd, c);
-			gfx.DrawCircle((relativeLocAlignEnd), 5.0f / cameraZoom, c);
-	
-			RetroContent::DrawString(gfx, worldObjects[currentViewedWorldObject].brainPtr->behaviours[b]->info.name, Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 1 / 9) + 300.0f + 50.0f * (float)b), 3, c);
+			// Draw velocity vector
+
+			Vec2 lineStart = Vec2() + cameraLoc;
+			Vec2 lineEnd;
+			if (i == 0)
+			{
+				lineEnd = worldObjects[currentViewedWorldObject].GetPhysicsInfo()->velocity + cameraLoc;
+			}
+			if (i == 1)
+			{
+				lineEnd = worldObjects[currentViewedWorldObject].GetPhysicsInfo()->totalDesiredVelocity + cameraLoc;
+			}
+			if (i == 2)
+			{
+				lineEnd = worldObjects[currentViewedWorldObject].GetPhysicsInfo()->totalSteeringVelocity + cameraLoc;
+			}
+			if (i > 3)
+			{
+				lineEnd = worldObjects[currentViewedWorldObject].brainPtr->behaviours[i - 4]->info.steeringVelocity + cameraLoc;
+			}
+
+			Vec2 relativeLocStart = Vec2();
+			relativeLocStart.x = (lineStart - cameraLoc).x * cosAngle + (lineStart - cameraLoc).y * sinAngle;
+			relativeLocStart.y = (lineStart - cameraLoc).y * cosAngle - (lineStart - cameraLoc).x * sinAngle;
+
+			relativeLocStart = relativeLocStart / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
+
+			Vec2 relativeLocEnd = Vec2();
+			relativeLocEnd.x = (lineEnd - cameraLoc).x * cosAngle + (lineEnd - cameraLoc).y * sinAngle;
+			relativeLocEnd.y = (lineEnd - cameraLoc).y * cosAngle - (lineEnd - cameraLoc).x * sinAngle;
+
+			relativeLocEnd = relativeLocEnd / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
+
+
+			gfx.DrawLine(Line(relativeLocStart, relativeLocEnd), relativeLocStart, relativeLocEnd, displayVectorsColors[i]);
+			gfx.DrawCircle((relativeLocEnd), 5.0f / cameraZoom, displayVectorsColors[i]);
+
+
+
+			RetroContent::DrawString(gfx, displayVectorsNames[i], Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 1 / 9) + 100.0f + 50.0f * (float)i), 3, displayVectorsColors[i]);
 		}
-	
-	
-	
-	}
-	else
-	{
-		for (int b = 0; b < worldObjects[currentViewedWorldObject].brainPtr->behaviours.size(); b++)
+		else
 		{
-			RetroContent::DrawString(gfx, worldObjects[currentViewedWorldObject].brainPtr->behaviours[b]->info.name, Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 1 / 9) + 300.0f + 50.0f * (float)b), 3, Colors::Gray);
+			RetroContent::DrawString(gfx, displayVectorsNames[i], Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 1 / 9) + 100.0f + 50.0f * (float)i), 3, Colors::Gray);
 		}
-	
 	}
+	
+
+	for (int i = 0; i < worldObjects[currentViewedWorldObject].brainPtr->behaviours.size(); i++)
+	{
+		if (worldObjects[currentViewedWorldObject].brainPtr->behaviours[i]->info.isActive)
+		{
+			gfx.PutRect((float)(350.0f), (float)(gfx.ScreenHeight * 1 / 9) + 100.0f + 50.0f * (float)(i + 4) + 5.0f, 15, 15, Colors::Green);
+		}
+		else
+		{
+			gfx.PutRect((float)(350.0f), (float)(gfx.ScreenHeight * 1 / 9) + 100.0f + 50.0f * (float)(i + 4) + 5.0f, 15, 15, Colors::Red);
+		}
+	}
+
+
+	//if (f2IsActive)
+	//{
+	//	// Draw desired velocity vector
+	//
+	//	Vec2 line2Start = Vec2() + cameraLoc;
+	//	Vec2 line2End =  + cameraLoc;
+	//
+	//	Vec2 relativeLoc2Start = Vec2();
+	//	relativeLoc2Start.x = (line2Start - cameraLoc).x * cosAngle + (line2Start - cameraLoc).y * sinAngle;
+	//	relativeLoc2Start.y = (line2Start - cameraLoc).y * cosAngle - (line2Start - cameraLoc).x * sinAngle;
+	//
+	//	relativeLoc2Start = relativeLoc2Start / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
+	//
+	//	Vec2 relativeLoc2End = Vec2();
+	//	relativeLoc2End.x = (line2End - cameraLoc).x * cosAngle + (line2End - cameraLoc).y * sinAngle;
+	//	relativeLoc2End.y = (line2End - cameraLoc).y * cosAngle - (line2End - cameraLoc).x * sinAngle;
+	//
+	//	relativeLoc2End = relativeLoc2End / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
+	//
+	//
+	//	gfx.DrawLine(Line(relativeLoc2Start, relativeLoc2End), relativeLoc2Start, relativeLoc2End, Colors::Cyan);
+	//	gfx.DrawCircle((relativeLoc2End), 5.0f / cameraZoom, Colors::Cyan);
+	//
+	//	RetroContent::DrawString(gfx, "DESIRED", Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 1 / 9) + 150.0f), 3, Colors::Cyan);
+	//}
+	//else
+	//{
+	//	RetroContent::DrawString(gfx, "DESIRED", Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 1 / 9) + 150.0f), 3, Colors::Gray);
+	//}
+	//
+	//
+	//if (f3IsActive)
+	//{
+	//	// Draw steering force
+	//
+	//	Vec2 line2Start = Vec2() + cameraLoc;
+	//	Vec2 line2End =  + cameraLoc;
+	//
+	//	Vec2 relativeLoc2Start = Vec2();
+	//	relativeLoc2Start.x = (line2Start - cameraLoc).x * cosAngle + (line2Start - cameraLoc).y * sinAngle;
+	//	relativeLoc2Start.y = (line2Start - cameraLoc).y * cosAngle - (line2Start - cameraLoc).x * sinAngle;
+	//
+	//	relativeLoc2Start = relativeLoc2Start / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
+	//
+	//	Vec2 relativeLoc2End = Vec2();
+	//	relativeLoc2End.x = (line2End - cameraLoc).x * cosAngle + (line2End - cameraLoc).y * sinAngle;
+	//	relativeLoc2End.y = (line2End - cameraLoc).y * cosAngle - (line2End - cameraLoc).x * sinAngle;
+	//
+	//	relativeLoc2End = relativeLoc2End / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
+	//
+	//
+	//	gfx.DrawLine(Line(relativeLoc2Start, relativeLoc2End), relativeLoc2Start, relativeLoc2End, Color(255, 127, 0));
+	//	gfx.DrawCircle((relativeLoc2End), 5.0f / cameraZoom, Color(255, 127, 0));
+	//
+	//	RetroContent::DrawString(gfx, "STEERING", Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 1 / 9) + 200.0f), 3, Color(255, 127, 0));
+	//}
+	//else
+	//{
+	//	RetroContent::DrawString(gfx, "STEERING", Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 1 / 9) + 200.0f), 3, Colors::Gray);
+	//}
+	//
+	//if (f4IsActive)
+	//{
+	//
+	//  // Draw component steering forces
+	//	
+	//
+	//	for (int b = 0; b < worldObjects[currentViewedWorldObject].brainPtr->behaviours.size(); b++)
+	//	{
+	//		Color c = Color(255, 60 * b * 2, 255 - 40 * b * 2);
+	//
+	//		Vec2 lineAlignStart = Vec2() + cameraLoc;
+	//		Vec2 lineAlignEnd =  + cameraLoc;
+	//
+	//		Vec2 relativeLocAlignStart = Vec2();
+	//		relativeLocAlignStart.x = (lineAlignStart - cameraLoc).x * cosAngle + (lineAlignStart - cameraLoc).y * sinAngle;
+	//		relativeLocAlignStart.y = (lineAlignStart - cameraLoc).y * cosAngle - (lineAlignStart - cameraLoc).x * sinAngle;
+	//
+	//		relativeLocAlignStart = relativeLocAlignStart / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
+	//
+	//		Vec2 relativeLocAlignEnd = Vec2();
+	//		relativeLocAlignEnd.x = (lineAlignEnd - cameraLoc).x * cosAngle + (lineAlignEnd - cameraLoc).y * sinAngle;
+	//		relativeLocAlignEnd.y = (lineAlignEnd - cameraLoc).y * cosAngle - (lineAlignEnd - cameraLoc).x * sinAngle;
+	//
+	//		relativeLocAlignEnd = relativeLocAlignEnd / cameraZoom + Vec2((float)(gfx.ScreenWidth / 2), (float)(gfx.ScreenHeight / 2));
+	//
+	//
+	//		gfx.DrawLine(Line(relativeLocAlignStart, relativeLocAlignEnd), relativeLocAlignStart, relativeLocAlignEnd, c);
+	//		gfx.DrawCircle((relativeLocAlignEnd), 5.0f / cameraZoom, c);
+	//
+	//		RetroContent::DrawString(gfx, worldObjects[currentViewedWorldObject].brainPtr->behaviours[b]->info.name, Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 1 / 9) + 300.0f + 50.0f * (float)b), 3, c);
+	//	}
+	//
+	//
+	//
+	//}
+	//else
+	//{
+	//	for (int b = 0; b < worldObjects[currentViewedWorldObject].brainPtr->behaviours.size(); b++)
+	//	{
+	//		RetroContent::DrawString(gfx, worldObjects[currentViewedWorldObject].brainPtr->behaviours[b]->info.name, Vec2((float)(200.0f), (float)(gfx.ScreenHeight * 1 / 9) + 300.0f + 50.0f * (float)b), 3, Colors::Gray);
+	//	}
+	//
+	//}
 
 }
 

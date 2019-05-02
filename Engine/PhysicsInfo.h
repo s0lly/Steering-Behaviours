@@ -6,13 +6,17 @@ enum BRAIN_TYPE
 {
 	SHARK,
 	FISH,
-	BEE
+	BEE,
+	NONE
 };
 
 enum BEHAVIOUR_TYPE
 {
 	SEEK,
 	FLEE,
+	ARRIVE,
+	PURSUE,
+	EVADE,
 	ALIGN,
 	WANDER,
 	SEPARATION,
@@ -43,6 +47,7 @@ struct BehaviourInfo
 	int maxTargets;
 	int currentTargets;
 	Vec2 steeringVelocity;
+	bool isActive = true;
 };
 
 

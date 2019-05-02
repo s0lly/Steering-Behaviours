@@ -8,10 +8,11 @@ class WorldObject
 {
 public:
 
-	WorldObject(PhysicsInfo *in_PhysicsInfoPtr, float in_mass, Color in_color)
+	WorldObject(PhysicsInfo *in_PhysicsInfoPtr, float in_mass, float in_radius, Color in_color)
 		:
 		physicsInfoPtr(in_PhysicsInfoPtr),
 		mass(in_mass),
+		radius(in_radius),
 		color(in_color)
 	{
 		switch (physicsInfoPtr->brainType)
@@ -27,6 +28,10 @@ public:
 		case BRAIN_TYPE::BEE:
 		{
 			brainPtr = new BeeBrain(physicsInfoPtr);
+		}break;
+		case BRAIN_TYPE::NONE:
+		{
+			brainPtr = new ObstacleBrain(physicsInfoPtr);
 		}break;
 		}
 	}
@@ -46,12 +51,6 @@ public:
 
 	void Update(float dt)
 	{
-		// Cap desiredVelocity at maxSpeed
-		//if (physicsInfo.totalDesiredVelocity.GetMagnitude() > physicsInfo.maxSpeed)
-		//{
-		//	physicsInfo.desiredVelocity = (physicsInfo.desiredVelocity).Normalize() * physicsInfo.maxSpeed;
-		//}
-
 		ApplyForce(physicsInfoPtr->totalSteeringVelocity, dt);
 
 		Move(dt);
@@ -60,6 +59,11 @@ public:
 	void ApplyForce(Vec2 newForce, float dt)
 	{
 		physicsInfoPtr->velocity = physicsInfoPtr->velocity + (newForce * dt) / mass;
+
+		if (physicsInfoPtr->velocity.GetMagnitude() > physicsInfoPtr->maxSpeed)
+		{
+			physicsInfoPtr->velocity = physicsInfoPtr->velocity.Normalize() * physicsInfoPtr->maxSpeed;
+		}
 	}
 
 	PhysicsInfo * GetPhysicsInfo()
@@ -92,7 +96,7 @@ public:
 
 	PhysicsInfo *physicsInfoPtr;
 	float mass;
-	float radius = 5.0f;
+	float radius;
 	Color color = Colors::Red;
 	Brain* brainPtr = nullptr;
 

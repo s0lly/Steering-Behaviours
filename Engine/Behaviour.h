@@ -173,6 +173,105 @@ private:
 
 };
 
+
+class BehaviourArrive : public Behaviour
+{
+public:
+	BehaviourArrive(PhysicsInfo *in_selfPtr, BehaviourInfo in_info)
+		:
+		Behaviour(in_selfPtr, in_info)
+	{
+	}
+
+
+	void PerformLogicAndSetVelocityVectors() override
+	{
+		if (targets.size() > 0)
+		{
+			Vec2 averageLoc = FindAverageLocOfTargets();
+
+			Vec2 desiredVelocity = (averageLoc - selfPtr->loc);
+			info.steeringVelocity = desiredVelocity - selfPtr->velocity;
+		}
+	}
+
+
+private:
+
+
+};
+
+
+class BehaviourPursue : public Behaviour
+{
+public:
+	BehaviourPursue(PhysicsInfo *in_selfPtr, BehaviourInfo in_info)
+		:
+		Behaviour(in_selfPtr, in_info)
+	{
+	}
+
+
+	void PerformLogicAndSetVelocityVectors() override
+	{
+		if (targets.size() > 0)
+		{
+			Vec2 averageLoc = FindWeightedAverageLocOfTargetsByDistance();
+			Vec2 averageVelocity = FindWeightedAverageVelocityOfTargetsByDistance();
+
+			Vec2 searchLoc = averageLoc - selfPtr->loc;
+			
+			float timeToMeet = searchLoc.GetMagnitude() / ((averageVelocity - (averageLoc - selfPtr->loc).Normalize() * (selfPtr->velocity.GetMagnitude() + selfPtr->maxSpeed) * 0.5f).GetMagnitude());
+			
+			Vec2 placeToSeek = averageLoc + averageVelocity * timeToMeet;
+
+			Vec2 desiredVelocity = ((placeToSeek - selfPtr->loc).Normalize() * selfPtr->maxSpeed);
+			info.steeringVelocity = desiredVelocity - selfPtr->velocity;
+		}
+	}
+
+
+private:
+
+
+};
+
+
+class BehaviourEvade : public Behaviour
+{
+public:
+	BehaviourEvade(PhysicsInfo *in_selfPtr, BehaviourInfo in_info)
+		:
+		Behaviour(in_selfPtr, in_info)
+	{
+	}
+
+
+	void PerformLogicAndSetVelocityVectors() override
+	{
+		if (targets.size() > 0)
+		{
+			Vec2 averageLoc = FindWeightedAverageLocOfTargetsByDistance();
+			Vec2 averageVelocity = FindWeightedAverageVelocityOfTargetsByDistance();
+
+			Vec2 searchLoc = averageLoc - selfPtr->loc;
+
+			float timeToMeet = searchLoc.GetMagnitude() / ((averageVelocity - (averageLoc - selfPtr->loc).Normalize() * (selfPtr->velocity.GetMagnitude() + selfPtr->maxSpeed) * 0.5f).GetMagnitude());
+
+			Vec2 placeToSeek = averageLoc + averageVelocity * timeToMeet;
+
+			Vec2 desiredVelocity = ((selfPtr->loc - placeToSeek).Normalize() * selfPtr->maxSpeed);
+			info.steeringVelocity = desiredVelocity - selfPtr->velocity;
+		}
+	}
+
+
+private:
+
+
+};
+
+
 class BehaviourSeparation : public Behaviour
 {
 public:
@@ -342,6 +441,18 @@ static Behaviour* CreateBehaviour(PhysicsInfo *selfPtr, BehaviourInfo info)
 	case BEHAVIOUR_TYPE::FLEE:
 	{
 		return new BehaviourFlee(selfPtr, info);
+	}break;
+	case BEHAVIOUR_TYPE::ARRIVE:
+	{
+		return new BehaviourArrive(selfPtr, info);
+	}break;
+	case BEHAVIOUR_TYPE::PURSUE:
+	{
+		return new BehaviourPursue(selfPtr, info);
+	}break;
+	case BEHAVIOUR_TYPE::EVADE:
+	{
+		return new BehaviourEvade(selfPtr, info);
 	}break;
 	case BEHAVIOUR_TYPE::ALIGN:
 	{

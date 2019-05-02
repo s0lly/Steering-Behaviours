@@ -136,3 +136,20 @@ public:
 private:
 
 };
+
+
+struct Rect
+{
+	Vec2 topLeft;
+	float width;
+	float height;
+};
+
+static bool
+InRectArea(Rect rect, Vec2 testLoc)
+{
+	return ((testLoc.x <= rect.topLeft.x + rect.width) &&
+		(testLoc.x >= rect.topLeft.x) &&
+		(testLoc.y <= rect.topLeft.y + rect.height) &&
+		(testLoc.y >= rect.topLeft.y));
+}
